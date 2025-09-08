@@ -35,6 +35,7 @@ class ChatResponse(BaseModel):
     session_id: str
 
 @app.get("/", response_class=HTMLResponse)
+@app.head("/")
 async def home():
     """메인 페이지"""
     return """
@@ -237,6 +238,7 @@ async def get_hotels(city: str = None, max_price: int = None, min_rating: int = 
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
+@app.head("/health")
 async def health_check():
     """헬스 체크"""
     return {
