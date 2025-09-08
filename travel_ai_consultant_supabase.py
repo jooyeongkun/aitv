@@ -51,8 +51,8 @@ class TravelAIConsultantSupabase:
             return ai_response
             
         except Exception as e:
-            print("Gemini API Error occurred")
-            # Gemini 실패시 규칙 기반 응답
+            print(f"Gemini API Error occurred: {e}")
+            # Gemini 실패시 아래 규칙 기반 응답으로 fallback
             
         # 규칙 기반 응답 (백업)
         if "db" in user_message_lower or "데이터베이스" in user_message_lower or "저장" in user_message_lower:
