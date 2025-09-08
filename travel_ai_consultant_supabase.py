@@ -1,0 +1,126 @@
+"""
+여행 상담 AI 모듈 (Supabase 연동 버전)
+"""
+import google.generativeai as genai
+from supabase_db import SupabaseDB
+
+class TravelAIConsultantSupabase:
+    def __init__(self, db: SupabaseDB):
+        self.db = db
+        # Gemini API 설정
+        genai.configure(api_key="AIzaSyDiT1gqT-X8rvXJ1VgjOBP6P_vxri0xqv0")
+        self.gemini_model = genai.GenerativeModel('gemini-pro')
+        
+    def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
+        """여행 추천 생성 (Gemini AI + Supabase 데이터)"""
+        print("Processing travel recommendation request")
+        user_message_lower = user_message.lower()
+        
+        # Gemini API 시도
+        try:
+            # Supabase에서 회사 DB 정보 가져오기
+            db_info = self.db.get_all_data_summary()
+            
+            prompt = f"""
+            You are a professional travel consultant for a Korean travel agency. 
+            Use the following company database information to provide personalized recommendations:
+            
+            {db_info}
+            
+            Customer inquiry: {user_message}
+            
+            Please provide a helpful response in Korean that:
+            1. Addresses the customer's specific needs
+            2. Recommends relevant packages or hotels from our database
+            3. Includes prices and key features
+            4. Maintains a friendly, professional tone
+            5. Asks follow-up questions to better assist them
+            
+            If the customer asks about something not in our database, politely explain our available options.
+            """
+            
+            response = self.gemini_model.generate_content(prompt)
+            ai_response = response.text
+            
+            # 상담 메시지를 Supabase에 저장
+            self.db.save_consultation_message(session_id, user_message, ai_response)
+            
+            print("Gemini AI Response received")
+            return ai_response
+            
+        except Exception as e:
+            print("Gemini API Error occurred")
+            # Gemini 실패시 규칙 기반 응답
+            
+        # 규칙 기반 응답 (백업)
+        if "db" in user_message_lower or "데이터베이스" in user_message_lower or "저장" in user_message_lower:
+            packages = self.db.get_packages()
+            hotels = self.db.get_hotels()
+            
+            response = f"현재 저장된 데이터:\\n"
+            response += f"- 패키지: {len(packages)}개\\n"
+            response += f"- 호텔: {len(hotels)}개\\n\\n"
+            
+            if packages:
+                response += "주요 패키지:\\n"
+                for pkg in packages[:3]:  # 상위 3개만
+                    response += f"• {pkg.get('name', 'N/A')} - {pkg.get('price', 0):,}원\\n"
+            
+            if hotels:
+                response += "\\n주요 호텔:\\n"
+                for hotel in hotels[:3]:  # 상위 3개만
+                    response += f"• {hotel.get('name', 'N/A')} - {hotel.get('price_per_night', 0):,}원/박\\n"
+                    
+            return response
+        
+        elif "제주" in user_message_lower or "jeju" in user_message_lower:
+            packages = self.db.get_packages(destination="제주")
+            hotels = self.db.get_hotels(city="제주")
+            
+            response = "🌺 제주도 여행 추천드립니다!\\n\\n"
+            
+            if packages:
+                response += "추천 패키지:\\n"
+                for pkg in packages:
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원 ({pkg.get('duration', 'N/A')}일)\\n"
+                    response += f"  포함사항: {pkg.get('includes', 'N/A')}\\n\\n"
+            
+            if hotels:
+                response += "추천 호텔:\\n"
+                for hotel in hotels:
+                    response += f"• {hotel.get('name', 'N/A')}: {hotel.get('price_per_night', 0):,}원/박 ({hotel.get('star_rating', 'N/A')}성급)\\n"
+                    response += f"  위치: {hotel.get('address', 'N/A')}\\n\\n"
+                    
+            response += "더 자세한 정보가 필요하시면 언제든 문의해주세요!"
+            return response
+        
+        elif "부산" in user_message_lower or "busan" in user_message_lower:
+            packages = self.db.get_packages(destination="부산")
+            hotels = self.db.get_hotels(city="부산")
+            
+            response = "🌊 부산 여행 추천드립니다!\\n\\n"
+            
+            if packages:
+                response += "추천 패키지:\\n"
+                for pkg in packages:
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원\\n"
+                    
+            if hotels:
+                response += "\\n추천 숙소:\\n"
+                for hotel in hotels:
+                    response += f"• {hotel.get('name', 'N/A')}: {hotel.get('price_per_night', 0):,}원/박\\n"
+                    
+            return response
+        
+        # 기본 응답
+        return """안녕하세요! 저희 여행사에 문의해 주셔서 감사합니다. 🌟
+        
+현재 제주도, 부산, 강릉, 경주 등 다양한 국내 여행 상품을 준비하고 있습니다.
+
+어떤 여행을 원하시나요?
+• 여행 목적지
+• 여행 기간  
+• 예산 범위
+• 선호하는 여행 스타일
+
+자세히 알려주시면 맞춤 추천해드리겠습니다!"""
