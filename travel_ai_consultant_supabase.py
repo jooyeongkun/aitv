@@ -15,8 +15,9 @@ class TravelAIConsultantSupabase:
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
         """여행 추천 생성 (Gemini AI + Supabase 데이터)"""
-        print("Processing travel recommendation request")
+        print(f"Processing travel recommendation request: {user_message}")
         user_message_lower = user_message.lower()
+        print(f"Lowercase message: {user_message_lower}")
         
         # Gemini API 시도
         try:
