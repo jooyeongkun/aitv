@@ -1,6 +1,7 @@
 """
 여행 상담 AI 모듈 (Supabase 연동 버전)
 """
+import os
 import google.generativeai as genai
 from supabase_db import SupabaseDB
 
@@ -8,7 +9,8 @@ class TravelAIConsultantSupabase:
     def __init__(self, db: SupabaseDB):
         self.db = db
         # Gemini API 설정
-        genai.configure(api_key="AIzaSyDiT1gqT-X8rvXJ1VgjOBP6P_vxri0xqv0")
+        api_key = os.getenv("GEMINI_API_KEY", "AIzaSyDiT1gqT-X8rvXJ1VgjOBP6P_vxri0xqv0")
+        genai.configure(api_key=api_key)
         self.gemini_model = genai.GenerativeModel('gemini-pro')
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:

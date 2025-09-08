@@ -1,6 +1,7 @@
 """
 Supabase 데이터베이스 연동 모듈
 """
+import os
 import uuid
 from datetime import datetime
 from typing import List, Dict, Optional
@@ -8,8 +9,8 @@ from supabase import create_client, Client
 
 class SupabaseDB:
     def __init__(self):
-        self.url = "https://nqxlbxwkgaxrqubadblh.supabase.co"
-        self.key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xeGxieHdrZ2F4cnF1YmFkYmxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNDMyNTYsImV4cCI6MjA3MjkxOTI1Nn0.TQDVUO0ap8-DED-JhBpCGRWQYvlWBWiI--thzJd3K5g"
+        self.url = os.getenv("SUPABASE_URL", "https://nqxlbxwkgaxrqubadblh.supabase.co")
+        self.key = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xeGxieHdrZ2F4cnF1YmFkYmxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNDMyNTYsImV4cCI6MjA3MjkxOTI1Nn0.TQDVUO0ap8-DED-JhBpCGRWQYvlWBWiI--thzJd3K5g")
         self.client: Client = create_client(self.url, self.key)
         self.connected = False
 
