@@ -2,15 +2,31 @@
 여행 상담 AI 웹서비스 (Supabase 연동 버전)
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 from typing import Optional
 from supabase_db import SupabaseDB
 from travel_ai_consultant_supabase import TravelAIConsultantSupabase
 
 app = FastAPI(title="여행 상담 AI 서비스 (Supabase)")
+
+# HEAD 요청 자동 처리를 위한 미들웨어
+@app.middleware("http")
+async def add_head_support(request: Request, call_next):
+    if request.method == "HEAD":
+        # HEAD 요청을 GET으로 변환하여 처리
+        request.scope["method"] = "GET"
+        response = await call_next(request)
+        # HEAD 응답에서는 body를 제거
+        return Response(
+            content="",
+            status_code=response.status_code,
+            headers=response.headers,
+            media_type=response.media_type
+        )
+    return await call_next(request)
 
 # Supabase DB 초기화
 db = SupabaseDB()
@@ -35,7 +51,6 @@ class ChatResponse(BaseModel):
     session_id: str
 
 @app.get("/", response_class=HTMLResponse)
-@app.head("/")
 async def home():
     """메인 페이지"""
     return """
@@ -238,7 +253,6 @@ async def get_hotels(city: str = None, max_price: int = None, min_rating: int = 
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
-@app.head("/health")
 async def health_check():
     """헬스 체크"""
     return {
