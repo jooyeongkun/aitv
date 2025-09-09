@@ -80,8 +80,28 @@ class TravelAIConsultantSupabase:
             pass  # 아래 규칙 기반 응답으로 진행
             
         # 규칙 기반 응답 (백업)
+        # 해외 여행 키워드 감지
+        if "해외" in user_message or "다낭" in user_message or "해외여행" in user_message or "international" in user_message_lower:
+            packages = self.db.get_packages()
+            overseas_packages = [pkg for pkg in packages if "다낭" in pkg.get('destination', '')]
+            
+            if overseas_packages:
+                response = "🌴 해외 여행 상품을 소개해드릴게요!\\n\\n"
+                response += "추천 해외 패키지:\\n"
+                for pkg in overseas_packages:
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원 ({pkg.get('duration', 'N/A')}일)\\n"
+                    response += f"  목적지: {pkg.get('destination', 'N/A')}\\n"
+                    response += f"  포함사항: {pkg.get('includes', 'N/A')}\\n\\n"
+                response += "더 자세한 정보가 필요하시면 언제든 문의해주세요!"
+            else:
+                response = "현재 다낭 여행 상품을 준비 중입니다! 곧 더 많은 해외 패키지를 선보일 예정이에요. 🌟"
+            
+            # 상담 내용 저장
+            self.db.save_consultation_message(session_id, user_message, response)
+            return response
+        
         # 제주도 키워드 감지 (인코딩 문제 대응)
-        if "제주" in user_message or "jeju" in user_message_lower or "패키지" in user_message:
+        elif "제주" in user_message or "jeju" in user_message_lower or "패키지" in user_message:
             packages = self.db.get_packages(destination="제주")
             hotels = self.db.get_hotels(city="제주")
             
