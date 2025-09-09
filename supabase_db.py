@@ -268,8 +268,13 @@ class SupabaseDB:
     def get_consultation_sessions(self) -> List[Dict]:
         """상담 세션 목록 조회 (관리자용)"""
         try:
-            # 메시지가 있는 세션들만 조회
-            sessions = self.get_active_sessions()
+            # 모든 상담 세션 조회
+            response = self.client.table('consultation_sessions')\
+                .select("*")\
+                .order('created_at', desc=True)\
+                .execute()
+            
+            sessions = response.data if response.data else []
             
             # 각 세션에 메시지 개수 추가
             for session in sessions:
