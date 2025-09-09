@@ -41,19 +41,92 @@ class SupabaseDB:
             print(f"Error creating consultation session: {e}")
             return session_id
 
-    def save_consultation_message(self, session_id: str, user_message: str, ai_response: str):
-        """상담 메시지 저장"""
+    def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None, sender_type: str = "ai"):
+        """상담 메시지 저장 (AI 또는 인간 상담사)"""
         try:
             data = {
                 "session_id": session_id,
                 "user_message": user_message,
                 "ai_response": ai_response,
+                "human_response": human_response,
+                "sender_type": sender_type,  # 'ai', 'human', 'user'
                 "created_at": datetime.now().isoformat()
             }
             self.client.table('consultation_messages').insert(data).execute()
-            print("Message saved to Supabase")
+            print(f"Message saved to Supabase (sender: {sender_type})")
         except Exception as e:
             print(f"Error saving consultation message: {e}")
+
+    def get_session_messages(self, session_id: str):
+        """세션의 모든 메시지 조회"""
+        try:
+            response = self.client.table('consultation_messages')\
+                .select("*")\
+                .eq('session_id', session_id)\
+                .order('created_at', desc=False)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting session messages: {e}")
+            return []
+
+    def set_session_human_mode(self, session_id: str, human_mode: bool = True):
+        """세션을 인간 상담사 모드로 전환"""
+        try:
+            data = {
+                "human_mode": human_mode,
+                "human_joined_at": datetime.now().isoformat() if human_mode else None
+            }
+            self.client.table('consultation_sessions').update(data).eq('session_id', session_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error setting human mode: {e}")
+            return False
+
+    def get_active_sessions(self):
+        """활성 상담 세션 목록 조회 (메시지가 있는 세션만)"""
+        try:
+            # 먼저 메시지가 있는 세션 ID들을 조회
+            messages_response = self.client.table('consultation_messages')\
+                .select("session_id")\
+                .execute()
+            
+            if not messages_response.data:
+                return []
+            
+            # 메시지가 있는 세션 ID들 추출
+            session_ids = list(set([msg['session_id'] for msg in messages_response.data]))
+            
+            # 해당 세션들의 정보 조회 (active 상태만)
+            sessions = []
+            for session_id in session_ids:
+                session_response = self.client.table('consultation_sessions')\
+                    .select("*")\
+                    .eq('session_id', session_id)\
+                    .eq('status', 'active')\
+                    .execute()
+                if session_response.data:
+                    sessions.extend(session_response.data)
+            
+            # 최신순으로 정렬
+            sessions.sort(key=lambda x: x['created_at'], reverse=True)
+            return sessions
+        except Exception as e:
+            print(f"Error getting active sessions: {e}")
+            return []
+
+    def get_session_status(self, session_id: str):
+        """세션 상태 조회"""
+        try:
+            response = self.client.table('consultation_sessions')\
+                .select("*")\
+                .eq('session_id', session_id)\
+                .single()\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting session status: {e}")
+            return None
 
     def get_packages(self, destination: str = None, category: str = None, max_price: int = None) -> List[Dict]:
         """패키지 조회"""
@@ -128,4 +201,66 @@ class SupabaseDB:
             return True
         except Exception as e:
             print(f"Error adding hotel: {e}")
+            return False
+
+    def delete_package(self, package_id: int) -> bool:
+        """패키지 삭제"""
+        try:
+            result = self.client.table('packages').delete().eq('id', package_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            print(f"Error deleting package: {e}")
+            return False
+
+    def delete_hotel(self, hotel_id: int) -> bool:
+        """호텔 삭제"""
+        try:
+            result = self.client.table('hotels').delete().eq('id', hotel_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            print(f"Error deleting hotel: {e}")
+            return False
+
+    def update_package(self, package_id: int, data: Dict) -> bool:
+        """패키지 수정"""
+        try:
+            result = self.client.table('packages').update(data).eq('id', package_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            print(f"Error updating package: {e}")
+            return False
+
+    def update_hotel(self, hotel_id: int, data: Dict) -> bool:
+        """호텔 수정"""
+        try:
+            result = self.client.table('hotels').update(data).eq('id', hotel_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            print(f"Error updating hotel: {e}")
+            return False
+
+    def delete_consultation_session(self, session_id: str) -> bool:
+        """상담 세션 및 관련 메시지 삭제"""
+        try:
+            # 먼저 해당 세션의 메시지들 삭제
+            self.client.table('consultation_messages').delete().eq('session_id', session_id).execute()
+            
+            # 세션 삭제
+            result = self.client.table('consultation_sessions').delete().eq('session_id', session_id).execute()
+            return len(result.data) > 0
+        except Exception as e:
+            print(f"Error deleting consultation session: {e}")
+            return False
+
+    def delete_all_consultation_data(self) -> bool:
+        """모든 상담 데이터 삭제 (세션 + 메시지)"""
+        try:
+            # 모든 메시지 삭제
+            self.client.table('consultation_messages').delete().neq('id', 0).execute()
+            
+            # 모든 세션 삭제
+            self.client.table('consultation_sessions').delete().neq('id', 0).execute()
+            return True
+        except Exception as e:
+            print(f"Error deleting all consultation data: {e}")
             return False

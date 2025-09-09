@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: aitv-web-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web_app_supabase.py
+    plan: free
+    envVars:
+      - key: SUPABASE_URL
+        value: https://nqxlbxwkgaxrqubadblh.supabase.co
+      - key: SUPABASE_KEY  
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xeGxieHdrZ2F4cnF1YmFkYmxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNDMyNTYsImV4cCI6MjA3MjkxOTI1Nn0.TQDVUO0ap8-DED-JhBpCGRWQYvlWBWiI--thzJd3K5g
+      - key: GEMINI_API_KEY
+        value: AIzaSyDt6bqssqmtNXKxBVrPZNBsOG4qMJVbYYg
