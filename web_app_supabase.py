@@ -1,4 +1,4 @@
-"""
+ㄴ"""
 여행 상담 AI 웹서비스 (Supabase 연동 버전)
 """
 
@@ -442,150 +442,6 @@ async def admin_page():
                 0% { background: #c3e6cb !important; }
                 100% { background: #d4edda !important; }
             }
-            .consultation-container {
-                display: grid;
-                grid-template-columns: 300px 1fr;
-                gap: 20px;
-                height: 600px;
-                margin-top: 20px;
-            }
-            .session-list-panel {
-                border: 2px solid #ddd;
-                border-radius: 8px;
-                padding: 15px;
-                background: #f9f9f9;
-            }
-            .sessions-list {
-                height: 400px;
-                overflow-y: auto;
-            }
-            .session-item {
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                padding: 10px;
-                margin-bottom: 8px;
-                background: white;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-size: 12px;
-            }
-            .session-item:hover {
-                background: #e3f2fd;
-                border-color: #2196F3;
-            }
-            .session-item.active {
-                background: #2196F3;
-                color: white;
-                border-color: #1976D2;
-            }
-            .session-item.human-mode {
-                border-left: 4px solid #4CAF50;
-            }
-            .session-time {
-                font-weight: bold;
-                font-size: 11px;
-                color: #666;
-                margin-bottom: 5px;
-            }
-            .session-item.active .session-time {
-                color: #e3f2fd;
-            }
-            .chat-panel {
-                border: 2px solid #ddd;
-                border-radius: 8px;
-                background: white;
-                display: flex;
-                flex-direction: column;
-            }
-            .consultation-chat-window {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-            }
-            .chat-header-consultation {
-                background: #2196F3;
-                color: white;
-                padding: 15px;
-                border-radius: 6px 6px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid #ddd;
-            }
-            .chat-controls button {
-                padding: 8px 15px;
-                border: none;
-                border-radius: 4px;
-                color: white;
-                cursor: pointer;
-                font-size: 12px;
-                margin-left: 10px;
-            }
-            .consultation-messages {
-                flex: 1;
-                padding: 15px;
-                overflow-y: auto;
-                background: #f8f9fa;
-                max-height: 400px;
-            }
-            .consultation-message {
-                margin: 10px 0;
-                padding: 10px;
-                border-radius: 8px;
-                max-width: 80%;
-                word-wrap: break-word;
-            }
-            .consultation-message.user {
-                background: #e3f2fd;
-                margin-left: auto;
-                text-align: right;
-            }
-            .consultation-message.ai {
-                background: #f3e5f5;
-                border-left: 3px solid #9c27b0;
-            }
-            .consultation-message.human {
-                background: #e8f5e9;
-                border-left: 3px solid #4CAF50;
-            }
-            .consultation-input {
-                padding: 15px;
-                border-top: 1px solid #ddd;
-                display: flex;
-                gap: 10px;
-                background: white;
-                border-radius: 0 0 6px 6px;
-            }
-            .consultation-input input {
-                flex: 1;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 20px;
-                font-size: 14px;
-            }
-            .consultation-input button {
-                padding: 10px 20px;
-                border: none;
-                border-radius: 20px;
-                color: white;
-                cursor: pointer;
-                font-size: 14px;
-            }
-            .consultation-placeholder {
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #f8f9fa;
-                border-radius: 6px;
-            }
-            @media (max-width: 768px) {
-                .consultation-container {
-                    grid-template-columns: 1fr;
-                    grid-template-rows: 200px 1fr;
-                    height: 800px;
-                }
-            }
         </style>
     </head>
     <body>
@@ -725,34 +581,27 @@ async def admin_page():
             <!-- 상담 관리 탭 -->
             <div id="consultation" class="content">
                 <h2>💬 상담 관리</h2>
-                <div class="consultation-container">
-                    <div class="session-list-panel">
+                
+                <div style="margin-bottom: 20px;">
+                    <button onclick="loadConsultationData()" style="background: #4CAF50;">🔄 새로고침</button>
+                    <button onclick="clearAllConsultations()" style="background: #f44336;">🗑️ 전체 삭제</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; height: 500px;">
+                    <div>
                         <h3>상담 세션 목록</h3>
-                        <div style="margin-bottom: 15px;">
-                            <button onclick="loadConsultationSessions()" style="background: #4CAF50;">🔄 새로고침</button>
-                            <button onclick="deleteAllConsultationData()" style="background: #f44336; margin-left: 10px;">🗑️ 전체 삭제</button>
+                        <div id="consultationSessions" style="border: 1px solid #ddd; height: 400px; overflow-y: auto; padding: 10px;">
+                            상담 세션을 선택하세요
                         </div>
-                        <div id="consultationSessionsList" class="sessions-list"></div>
                     </div>
-                    <div class="chat-panel">
-                        <div id="consultationChatWindow" class="consultation-chat-window" style="display: none;">
-                            <div class="chat-header-consultation">
-                                <span id="consultationChatTitle">상담 세션을 선택하세요</span>
-                                <div class="chat-controls">
-                                    <button id="takeOverConsultationBtn" onclick="takeOverConsultation()" style="background: #FF9800;">상담 인계받기</button>
-                                </div>
-                            </div>
-                            <div id="consultationChatMessages" class="consultation-messages"></div>
-                            <div class="consultation-input">
-                                <input type="text" id="consultationMessageInput" placeholder="고객에게 메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendConsultationMessage()">
-                                <button onclick="sendConsultationMessage()" style="background: #4CAF50;">전송</button>
-                            </div>
+                    <div>
+                        <h3>상담 내용</h3>
+                        <div id="consultationChat" style="border: 1px solid #ddd; height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9;">
+                            좌측 목록에서 세션을 클릭하세요
                         </div>
-                        <div id="consultationPlaceholder" class="consultation-placeholder">
-                            <div style="text-align: center; color: #666; margin-top: 100px;">
-                                <h3>상담 세션을 선택하면 채팅이 표시됩니다</h3>
-                                <p>좌측 목록에서 세션을 클릭하세요</p>
-                            </div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="takeOverConsultation()" style="background: #2196F3;">상담 인계받기</button>
+                            <button onclick="sendMessage()" style="background: #4CAF50;">전송</button>
                         </div>
                     </div>
                 </div>
@@ -775,38 +624,26 @@ async def admin_page():
                 if (event && event.target) {
                     event.target.classList.add('active');
                 } else {
-                    // event가 없는 경우 탭 이름으로 찾아서 active 추가
-                    const activeTab = document.querySelector(`button[onclick*="${tabName}"]`);
-                    if (activeTab) {
-                        activeTab.classList.add('active');
+                    // event가 없으면 data-tab 속성으로 찾기
+                    const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+                    if (targetTab) {
+                        targetTab.classList.add('active');
                     }
                 }
                 
-                // 해당 컨텐츠 표시
+                // 해당 콘텐츠에 active 추가
                 const targetContent = document.getElementById(tabName);
                 if (targetContent) {
                     targetContent.classList.add('active');
                 }
                 
-                // 기존 자동 새로고침 인터벌 정리
-                if (consultationRefreshInterval) {
-                    clearInterval(consultationRefreshInterval);
-                    consultationRefreshInterval = null;
-                }
-                
+                // 탭별 데이터 로드
                 if (tabName === 'view-data') {
                     loadAllData();
                 } else if (tabName === 'excel-mode') {
                     loadExcelData();
                 } else if (tabName === 'consultation') {
-                    loadConsultationSessions();
-                    // 상담 관리 탭에서 3초마다 자동 새로고침
-                    consultationRefreshInterval = setInterval(() => {
-                        loadConsultationSessions();
-                        if (currentConsultationSessionId) {
-                            loadConsultationMessages(currentConsultationSessionId);
-                        }
-                    }, 3000);
+                    loadConsultationData();
                 }
             }
 
@@ -1368,259 +1205,91 @@ async def admin_page():
                 }
             }
 
-            // 상담 관리 관련 변수
-            let currentConsultationSessionId = null;
-            let isHumanConsultationMode = false;
-            let consultationRefreshInterval = null;
-
-            // 상담 세션 목록 로드 (최신순)
-            async function loadConsultationSessions() {
+            // 상담 데이터 로드
+            async function loadConsultationData() {
                 try {
-                    const response = await fetch('/consultation/sessions');
-                    const sessions = await response.json();
+                    const response = await fetch('/admin/consultations');
+                    const data = await response.json();
                     
-                    const listContainer = document.getElementById('consultationSessionsList');
-                    listContainer.innerHTML = '';
-                    
-                    if (sessions.length === 0) {
-                        listContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">현재 활성 상담 세션이 없습니다.</div>';
-                        return;
+                    let html = '';
+                    if (data.sessions && data.sessions.length > 0) {
+                        data.sessions.forEach(session => {
+                            const date = new Date(session.created_at).toLocaleString();
+                            html += `<div class="session-item" onclick="selectSession('${session.id}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
+                                <strong>세션 ${session.id}</strong><br>
+                                <small>${date}</small><br>
+                                <small>메시지: ${session.message_count || 0}개</small>
+                            </div>`;
+                        });
+                    } else {
+                        html = '<div style="text-align: center; color: #666; padding: 20px;">등록된 상담 세션이 없습니다.</div>';
                     }
                     
-                    // 데이터베이스에서 이미 최신순으로 정렬되어 옴
-                    
-                    sessions.forEach(session => {
-                        const sessionItem = document.createElement('div');
-                        sessionItem.className = `session-item ${session.human_mode ? 'human-mode' : ''}`;
-                        sessionItem.onclick = () => selectConsultationSession(session.session_id);
-                        
-                        const sessionTime = new Date(session.created_at).toLocaleString('ko-KR', {
-                            year: 'numeric',
-                            month: '2-digit', 
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        
-                        sessionItem.innerHTML = `
-                            <div class="session-time">${sessionTime}</div>
-                            <div>ID: ${session.session_id.substring(0, 8)}...</div>
-                            <div style="margin-top: 5px;">
-                                <span style="font-size: 11px; padding: 2px 6px; border-radius: 10px; background: ${session.human_mode ? '#4CAF50' : '#2196F3'}; color: white;">
-                                    ${session.human_mode ? '👨‍💼 인간' : '🤖 AI'}
-                                </span>
-                                <button onclick="deleteConsultationSession('${session.session_id}', event)" style="font-size: 12px; background: #f44336; color: white; border: none; border-radius: 3px; padding: 2px 5px; margin-left: 10px; cursor: pointer;">🗑️</button>
-                            </div>
-                        `;
-                        
-                        listContainer.appendChild(sessionItem);
-                    });
+                    document.getElementById('consultationSessions').innerHTML = html;
                 } catch (error) {
-                    console.error('상담 세션 목록 로드 실패:', error);
-                    document.getElementById('consultationSessionsList').innerHTML = '<div style="color: red; padding: 20px;">세션 목록 로드에 실패했습니다.</div>';
+                    document.getElementById('consultationSessions').innerHTML = '<div class="error">상담 데이터 로드 실패</div>';
                 }
             }
 
             // 상담 세션 선택
-            async function selectConsultationSession(sessionId) {
-                // 기존 활성 세션 비활성화
-                document.querySelectorAll('.session-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                // 현재 세션 활성화
-                event.target.closest('.session-item').classList.add('active');
-                
-                currentConsultationSessionId = sessionId;
-                
-                // 채팅창 표시
-                document.getElementById('consultationPlaceholder').style.display = 'none';
-                document.getElementById('consultationChatWindow').style.display = 'flex';
-                document.getElementById('consultationChatTitle').textContent = `상담 세션: ${sessionId.substring(0, 8)}...`;
-                
-                // 세션 상태 확인 및 메시지 로드
-                await loadConsultationMessages();
-                await checkConsultationSessionStatus();
-            }
-
-            // 상담 메시지 로드
-            async function loadConsultationMessages() {
-                if (!currentConsultationSessionId) return;
-                
+            async function selectSession(sessionId) {
                 try {
-                    const response = await fetch(`/consultation/sessions/${currentConsultationSessionId}/messages`);
-                    const messages = await response.json();
+                    const response = await fetch(`/admin/consultations/${sessionId}`);
+                    const data = await response.json();
                     
-                    const messagesContainer = document.getElementById('consultationChatMessages');
-                    messagesContainer.innerHTML = '';
-                    
-                    messages.forEach(msg => {
-                        if (msg.user_message) {
-                            const userMsg = document.createElement('div');
-                            userMsg.className = 'consultation-message user';
-                            userMsg.innerHTML = `<div style="font-size: 12px; color: #666; margin-bottom: 5px;">${new Date(msg.created_at).toLocaleTimeString()}</div><strong>고객:</strong> ${msg.user_message}`;
-                            messagesContainer.appendChild(userMsg);
-                        }
-                        
-                        if (msg.ai_response) {
-                            const aiMsg = document.createElement('div');
-                            aiMsg.className = 'consultation-message ai';
-                            aiMsg.innerHTML = `<div style="font-size: 12px; color: #666; margin-bottom: 5px;">${new Date(msg.created_at).toLocaleTimeString()}</div><strong>🤖 AI:</strong> ${msg.ai_response}`;
-                            messagesContainer.appendChild(aiMsg);
-                        }
-                        
-                        if (msg.human_response) {
-                            const humanMsg = document.createElement('div');
-                            humanMsg.className = 'consultation-message human';
-                            humanMsg.innerHTML = `<div style="font-size: 12px; color: #666; margin-bottom: 5px;">${new Date(msg.created_at).toLocaleTimeString()}</div><strong>👨‍💼 상담사:</strong> ${msg.human_response}`;
-                            messagesContainer.appendChild(humanMsg);
-                        }
-                    });
-                    
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                } catch (error) {
-                    console.error('메시지 로드 실패:', error);
-                }
-            }
-
-            // 상담 세션 상태 확인
-            async function checkConsultationSessionStatus() {
-                if (!currentConsultationSessionId) return;
-                
-                try {
-                    const response = await fetch(`/consultation/sessions/${currentConsultationSessionId}/status`);
-                    const status = await response.json();
-                    
-                    isHumanConsultationMode = status?.human_mode || false;
-                    
-                    const takeOverBtn = document.getElementById('takeOverConsultationBtn');
-                    if (isHumanConsultationMode) {
-                        takeOverBtn.style.display = 'none';
+                    let html = '';
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => {
+                            const type = msg.role === 'user' ? 'user' : 'ai';
+                            const time = new Date(msg.timestamp).toLocaleString();
+                            html += `<div class="message ${type}" style="margin: 10px 0; padding: 10px; border-radius: 10px; background: ${type === 'user' ? '#e3f2fd' : '#f3e5f5'};">
+                                <strong>${type === 'user' ? '사용자' : 'AI'}:</strong> ${msg.content}<br>
+                                <small style="color: #666;">${time}</small>
+                            </div>`;
+                        });
                     } else {
-                        takeOverBtn.style.display = 'inline-block';
+                        html = '<div style="text-align: center; color: #666; padding: 20px;">이 세션에는 메시지가 없습니다.</div>';
                     }
+                    
+                    document.getElementById('consultationChat').innerHTML = html;
+                    
+                    // 선택된 세션 하이라이트
+                    document.querySelectorAll('.session-item').forEach(item => {
+                        item.style.background = '';
+                    });
+                    event.target.closest('.session-item').style.background = '#e3f2fd';
                 } catch (error) {
-                    console.error('세션 상태 확인 실패:', error);
+                    document.getElementById('consultationChat').innerHTML = '<div class="error">상담 내용 로드 실패</div>';
                 }
             }
 
             // 상담 인계받기
-            async function takeOverConsultation() {
-                if (!currentConsultationSessionId) return;
-                
-                try {
-                    const response = await fetch(`/consultation/sessions/${currentConsultationSessionId}/takeover`, {
-                        method: 'POST'
-                    });
-                    
-                    if (response.ok) {
-                        isHumanConsultationMode = true;
-                        document.getElementById('takeOverConsultationBtn').style.display = 'none';
-                        alert('상담을 인계받았습니다! 이제 고객과 직접 대화할 수 있습니다.');
-                        loadConsultationSessions(); // 세션 목록 새로고침
-                    } else {
-                        alert('상담 인계 실패');
-                    }
-                } catch (error) {
-                    console.error('상담 인계 실패:', error);
-                    alert('네트워크 오류');
-                }
+            function takeOverConsultation() {
+                alert('상담 인계받기 기능은 준비 중입니다.');
             }
 
-            // 상담사 메시지 전송
-            async function sendConsultationMessage() {
-                if (!currentConsultationSessionId || !isHumanConsultationMode) {
-                    alert('먼저 상담을 인계받아 주세요.');
-                    return;
-                }
-                
-                const input = document.getElementById('consultationMessageInput');
-                const message = input.value.trim();
-                if (!message) return;
-                
-                try {
-                    const response = await fetch(`/consultation/sessions/${currentConsultationSessionId}/message`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: message,
-                            sender_type: 'human'
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        input.value = '';
-                        loadConsultationMessages(); // 메시지 새로고침
-                    } else {
-                        alert('메시지 전송 실패');
-                    }
-                } catch (error) {
-                    console.error('메시지 전송 실패:', error);
-                    alert('네트워크 오류');
-                }
+            // 메시지 전송
+            function sendMessage() {
+                alert('메시지 전송 기능은 준비 중입니다.');
             }
 
-            // 개별 상담 세션 삭제
-            async function deleteConsultationSession(sessionId, event) {
-                event.stopPropagation(); // 세션 선택 방지
-                
-                if (!confirm('이 상담 세션과 모든 메시지를 삭제하시겠습니까?')) {
-                    return;
-                }
-                
-                try {
-                    const response = await fetch(`/consultation/sessions/${sessionId}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    if (response.ok) {
-                        alert('상담 세션이 삭제되었습니다.');
-                        loadConsultationSessions(); // 목록 새로고침
+            // 전체 상담 삭제
+            async function clearAllConsultations() {
+                if (confirm('정말 모든 상담 세션을 삭제하시겠습니까?')) {
+                    try {
+                        const response = await fetch('/admin/consultations', {
+                            method: 'DELETE'
+                        });
                         
-                        // 현재 선택된 세션이 삭제된 경우 채팅창 숨기기
-                        if (currentConsultationSessionId === sessionId) {
-                            document.getElementById('consultationChatWindow').style.display = 'none';
-                            document.getElementById('consultationPlaceholder').style.display = 'block';
-                            currentConsultationSessionId = null;
+                        if (response.ok) {
+                            alert('모든 상담 세션이 삭제되었습니다.');
+                            loadConsultationData();
+                        } else {
+                            alert('삭제 실패');
                         }
-                    } else {
-                        alert('상담 세션 삭제에 실패했습니다.');
+                    } catch (error) {
+                        alert('삭제에 실패했습니다: ' + error.message);
                     }
-                } catch (error) {
-                    console.error('상담 세션 삭제 실패:', error);
-                    alert('네트워크 오류');
-                }
-            }
-
-            // 모든 상담 데이터 삭제
-            async function deleteAllConsultationData() {
-                if (!confirm('⚠️ 모든 상담 세션과 메시지를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!')) {
-                    return;
-                }
-                
-                if (!confirm('정말로 모든 상담 데이터를 삭제하시겠습니까?')) {
-                    return;
-                }
-                
-                try {
-                    const response = await fetch('/consultation/sessions', {
-                        method: 'DELETE'
-                    });
-                    
-                    if (response.ok) {
-                        alert('모든 상담 데이터가 삭제되었습니다.');
-                        loadConsultationSessions(); // 목록 새로고침
-                        
-                        // 채팅창 숨기기
-                        document.getElementById('consultationChatWindow').style.display = 'none';
-                        document.getElementById('consultationPlaceholder').style.display = 'block';
-                        currentConsultationSessionId = null;
-                    } else {
-                        alert('상담 데이터 삭제에 실패했습니다.');
-                    }
-                } catch (error) {
-                    console.error('상담 데이터 삭제 실패:', error);
-                    alert('네트워크 오류');
                 }
             }
 
@@ -1711,83 +1380,36 @@ async def update_hotel(hotel_id: int, hotel_data: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 상담 관리용 API 엔드포인트들
-@app.get("/consultation/sessions")
-async def get_consultation_sessions():
-    """활성 상담 세션 목록 조회"""
+# 상담 세션 조회 API
+@app.get("/admin/consultations")
+async def get_consultations():
+    """상담 세션 목록 조회"""
     try:
-        sessions = db.get_active_sessions()
-        return sessions
+        sessions = db.get_consultation_sessions()
+        return {"sessions": sessions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/consultation/sessions/{session_id}/messages")
-async def get_consultation_session_messages(session_id: str):
-    """세션 메시지 조회"""
+# 특정 상담 세션 조회 API
+@app.get("/admin/consultations/{session_id}")
+async def get_consultation_session(session_id: str):
+    """특정 상담 세션의 메시지 조회"""
     try:
-        messages = db.get_session_messages(session_id)
-        return messages
+        messages = db.get_consultation_messages(session_id)
+        return {"messages": messages}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/consultation/sessions/{session_id}/status")
-async def get_consultation_session_status(session_id: str):
-    """세션 상태 조회"""
+# 상담 세션 삭제 API
+@app.delete("/admin/consultations")
+async def clear_all_consultations():
+    """모든 상담 세션 삭제"""
     try:
-        status = db.get_session_status(session_id)
-        if not status:
-            raise HTTPException(status_code=404, detail="Session not found")
-        return status
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/consultation/sessions/{session_id}/takeover")
-async def takeover_consultation_session(session_id: str):
-    """상담 세션 인계받기"""
-    try:
-        result = db.set_session_human_mode(session_id, True)
+        result = db.clear_all_consultations()
         if result:
-            return {"message": "Session taken over successfully"}
+            return {"message": "All consultations cleared successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to take over session")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/consultation/sessions/{session_id}/message")
-async def send_consultation_message(session_id: str, request: dict):
-    """상담사 메시지 전송"""
-    try:
-        message = request.get("message")
-        sender_type = request.get("sender_type", "human")
-        
-        if sender_type == "human":
-            db.save_consultation_message(session_id, "", None, message, "human")
-        
-        return {"message": "Message sent successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/consultation/sessions/{session_id}")
-async def delete_consultation_session(session_id: str):
-    """개별 상담 세션 삭제"""
-    try:
-        result = db.delete_consultation_session(session_id)
-        if result:
-            return {"message": "Session deleted successfully"}
-        else:
-            raise HTTPException(status_code=404, detail="Session not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/consultation/sessions")
-async def delete_all_consultation_sessions():
-    """모든 상담 데이터 삭제"""
-    try:
-        result = db.delete_all_consultation_data()
-        if result:
-            return {"message": "All consultation data deleted successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to delete consultation data")
+            raise HTTPException(status_code=500, detail="Failed to clear consultations")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1802,6 +1424,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    import os
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

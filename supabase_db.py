@@ -264,3 +264,57 @@ class SupabaseDB:
         except Exception as e:
             print(f"Error deleting all consultation data: {e}")
             return False
+
+    def get_consultation_sessions(self) -> List[Dict]:
+        """상담 세션 목록 조회 (관리자용)"""
+        try:
+            # 메시지가 있는 세션들만 조회
+            sessions = self.get_active_sessions()
+            
+            # 각 세션에 메시지 개수 추가
+            for session in sessions:
+                messages = self.get_session_messages(session['session_id'])
+                session['message_count'] = len(messages)
+            
+            return sessions
+        except Exception as e:
+            print(f"Error getting consultation sessions: {e}")
+            return []
+
+    def get_consultation_messages(self, session_id: str) -> List[Dict]:
+        """상담 메시지 조회 (관리자용)"""
+        try:
+            messages = self.get_session_messages(session_id)
+            
+            # 메시지를 관리자 페이지용 형식으로 변환
+            formatted_messages = []
+            for msg in messages:
+                if msg.get('user_message'):
+                    formatted_messages.append({
+                        'role': 'user',
+                        'content': msg['user_message'],
+                        'timestamp': msg['created_at']
+                    })
+                
+                if msg.get('ai_response'):
+                    formatted_messages.append({
+                        'role': 'ai',
+                        'content': msg['ai_response'],
+                        'timestamp': msg['created_at']
+                    })
+                
+                if msg.get('human_response'):
+                    formatted_messages.append({
+                        'role': 'human',
+                        'content': msg['human_response'],
+                        'timestamp': msg['created_at']
+                    })
+            
+            return formatted_messages
+        except Exception as e:
+            print(f"Error getting consultation messages: {e}")
+            return []
+
+    def clear_all_consultations(self) -> bool:
+        """모든 상담 데이터 삭제 (관리자용)"""
+        return self.delete_all_consultation_data()
