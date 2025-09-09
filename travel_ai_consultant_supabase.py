@@ -14,9 +14,9 @@ class TravelAIConsultantSupabase:
         # 최신 Gemini 모델 사용
         try:
             self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            print("✅ Gemini 1.5-flash 모델 초기화 성공")
+            print("Gemini 1.5-flash model initialized successfully")
         except Exception as e:
-            print(f"❌ Gemini 모델 초기화 실패: {e}")
+            print(f"Gemini model initialization failed: {e}")
             self.gemini_model = None
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
@@ -32,6 +32,10 @@ class TravelAIConsultantSupabase:
                 
             # DB 데이터를 활용한 프롬프트
             db_info = self.db.get_all_data_summary()
+            try:
+                print(f"Database info for AI: {db_info}")
+            except UnicodeEncodeError:
+                print("Database info retrieved (contains Korean characters)")
             
             prompt = f"""
             당신은 한국 여행 전문 상담사입니다. 아래 회사 데이터베이스 정보를 활용해서 고객에게 구체적인 상담을 제공하세요:
@@ -49,11 +53,14 @@ class TravelAIConsultantSupabase:
             데이터베이스에 없는 내용을 묻는다면, 보유한 상품을 안내하세요.
             """
             
-            print(f"🔄 Gemini API 호출 중...")
+            print("Calling Gemini API...")
             response = self.gemini_model.generate_content(prompt)
             ai_response = response.text
             
-            print(f"✅ Gemini 응답 받음: {ai_response[:50]}...")
+            try:
+                print(f"Gemini response received: {ai_response[:50]}...")
+            except UnicodeEncodeError:
+                print("Gemini response received (contains Korean characters)")
             
             # 상담 메시지를 Supabase에 저장
             self.db.save_consultation_message(session_id, user_message, ai_response)
@@ -61,12 +68,12 @@ class TravelAIConsultantSupabase:
             return ai_response
             
         except Exception as e:
-            print(f"❌ Gemini API Error: {e}")
+            print(f"Gemini API Error: {e}")
             # 간단한 키워드 응답으로 fallback
             if "안녕" in user_message:
-                return "👋 안녕하세요! 한국 여행 상담사입니다!"
+                return "Hello! I'm a Korean travel consultant!"
             elif "제주" in user_message:
-                return "🏝️ 제주도 좋죠! 어떤 여행을 계획하고 계신가요?"
+                return "Jeju Island is great! What kind of trip are you planning?"
             else:
                 return f"'{user_message}' 문의 감사합니다! 조금 더 구체적으로 말씀해주세요."
             
