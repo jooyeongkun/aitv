@@ -11,7 +11,13 @@ class TravelAIConsultantSupabase:
         # Gemini API 설정
         api_key = os.getenv("GEMINI_API_KEY", "AIzaSyDiT1gqT-X8rvXJ1VgjOBP6P_vxri0xqv0")
         genai.configure(api_key=api_key)
-        self.gemini_model = genai.GenerativeModel('gemini-pro')
+        # 최신 Gemini 모델 사용
+        try:
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            print("✅ Gemini 1.5-flash 모델 초기화 성공")
+        except Exception as e:
+            print(f"❌ Gemini 모델 초기화 실패: {e}")
+            self.gemini_model = None
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
         """여행 추천 생성 (Gemini AI + Supabase 데이터)"""
@@ -21,39 +27,32 @@ class TravelAIConsultantSupabase:
         
         # Gemini API 시도
         try:
-            # Supabase에서 회사 DB 정보 가져오기
-            db_info = self.db.get_all_data_summary()
+            if self.gemini_model is None:
+                raise Exception("Gemini model not initialized")
+                
+            # 간단한 프롬프트로 테스트
+            prompt = f"한국 여행 전문가로서 '{user_message}'에 대해 친근하게 한국어로 답변해주세요."
             
-            prompt = f"""
-            You are a professional travel consultant for a Korean travel agency. 
-            Use the following company database information to provide personalized recommendations:
-            
-            {db_info}
-            
-            Customer inquiry: {user_message}
-            
-            Please provide a helpful response in Korean that:
-            1. Addresses the customer's specific needs
-            2. Recommends relevant packages or hotels from our database
-            3. Includes prices and key features
-            4. Maintains a friendly, professional tone
-            5. Asks follow-up questions to better assist them
-            
-            If the customer asks about something not in our database, politely explain our available options.
-            """
-            
+            print(f"🔄 Gemini API 호출 중...")
             response = self.gemini_model.generate_content(prompt)
             ai_response = response.text
+            
+            print(f"✅ Gemini 응답 받음: {ai_response[:50]}...")
             
             # 상담 메시지를 Supabase에 저장
             self.db.save_consultation_message(session_id, user_message, ai_response)
             
-            print("Gemini AI Response received")
             return ai_response
             
         except Exception as e:
-            print(f"Gemini API Error occurred: {e}")
-            # Gemini 실패시 아래 규칙 기반 응답으로 fallback
+            print(f"❌ Gemini API Error: {e}")
+            # 간단한 키워드 응답으로 fallback
+            if "안녕" in user_message:
+                return "👋 안녕하세요! 한국 여행 상담사입니다!"
+            elif "제주" in user_message:
+                return "🏝️ 제주도 좋죠! 어떤 여행을 계획하고 계신가요?"
+            else:
+                return f"'{user_message}' 문의 감사합니다! 조금 더 구체적으로 말씀해주세요."
             
         # 규칙 기반 응답 (백업)
         if "db" in user_message_lower or "데이터베이스" in user_message_lower or "저장" in user_message_lower:
