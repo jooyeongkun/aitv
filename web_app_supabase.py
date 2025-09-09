@@ -460,26 +460,26 @@ async def admin_page():
                 <div style="margin-bottom: 20px;">
                     <button onclick="loadConsultationData()" style="background: #4CAF50;">🔄 새로고침</button>
                     <button onclick="clearAllConsultations()" style="background: #f44336;">🗑️ 전체 삭제</button>
-                </div>
-                
+            </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; height: 500px;">
                     <div>
                         <h3>상담 세션 목록</h3>
                         <div id="consultationSessions" style="border: 1px solid #ddd; height: 400px; overflow-y: auto; padding: 10px;">
                             상담 세션을 선택하세요
-                        </div>
-                    </div>
+                            </div>
+                            </div>
                     <div>
                         <h3>상담 내용</h3>
                         <div id="consultationChat" style="border: 1px solid #ddd; height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9;">
                             좌측 목록에서 세션을 클릭하세요
-                        </div>
+                            </div>
                         <div style="margin-top: 10px;">
                             <button onclick="takeOverConsultation()" style="background: #2196F3;">상담 인계받기</button>
                             <button onclick="sendMessage()" style="background: #4CAF50;">전송</button>
-                        </div>
-                    </div>
-                </div>
+                            </div>
+                            </div>
+                            </div>
             </div>
 
             <!-- 엑셀 모드 탭 -->
@@ -516,8 +516,8 @@ async def admin_page():
                 
                 // 클릭된 탭에 active 추가
                 if (event && event.target) {
-                    event.target.classList.add('active');
-                } else {
+                event.target.classList.add('active');
+                    } else {
                     // event가 없는 경우 탭 이름으로 찾아서 active 추가
                     const activeTab = document.querySelector(`button[onclick*="${tabName}"]`);
                     if (activeTab) {
@@ -774,9 +774,19 @@ async def admin_page():
 
             // 상담 세션 선택
             async function selectSession(sessionId) {
+                console.log('selectSession 함수 호출됨:', sessionId);
+                alert('세션 클릭됨: ' + sessionId); // 테스트용
+                
                 try {
                     const response = await fetch(`/admin/consultations/${sessionId}`);
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
                     const data = await response.json();
+                    console.log('Response data:', data);
                     
                     let html = '';
                     if (data.messages && data.messages.length > 0) {
@@ -800,7 +810,8 @@ async def admin_page():
                     });
                     event.target.closest('.session-item').style.background = '#e3f2fd';
                 } catch (error) {
-                    document.getElementById('consultationChat').innerHTML = '<div class="error">상담 내용 로드 실패</div>';
+                    console.error('Error loading consultation messages:', error);
+                    document.getElementById('consultationChat').innerHTML = `<div class="error">상담 내용 로드 실패: ${error.message}</div>`;
                 }
             }
 
@@ -926,10 +937,21 @@ async def update_hotel(hotel_id: int, hotel_data: dict):
 async def get_consultations():
     """상담 세션 목록 조회"""
     try:
+        print("Getting consultation sessions...")
         sessions = db.get_consultation_sessions()
+        print(f"Found {len(sessions)} sessions")
         return {"sessions": sessions}
     except Exception as e:
+        print(f"Error getting consultations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/test-consultations")
+async def test_consultations():
+    """상담 API 테스트"""
+    try:
+        return {"status": "ok", "message": "Consultation API is working"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # 특정 상담 세션 조회 API
 @app.get("/admin/consultations/{session_id}")
