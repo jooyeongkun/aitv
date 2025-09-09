@@ -101,7 +101,7 @@ class TravelAIConsultantSupabase:
             return response
         
         # 제주도 키워드 감지 (인코딩 문제 대응)
-        elif "제주" in user_message or "jeju" in user_message_lower or "패키지" in user_message:
+        elif "제주" in user_message or "jeju" in user_message_lower:
             packages = self.db.get_packages(destination="제주")
             hotels = self.db.get_hotels(city="제주")
             
@@ -163,15 +163,74 @@ class TravelAIConsultantSupabase:
                     
             return response
         
-        # 기본 응답
-        return """안녕하세요! 저희 여행사에 문의해 주셔서 감사합니다. 🌟
+        # 추가 키워드 감지
+        if "강릉" in user_message or "gangneung" in user_message_lower:
+            packages = self.db.get_packages(destination="강릉")
+            hotels = self.db.get_hotels(city="강릉")
+            response = "🌊 강릉 여행 추천드립니다!\\n\\n"
+            if packages:
+                response += "추천 패키지:\\n"
+                for pkg in packages:
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원 ({pkg.get('duration', 'N/A')}일)\\n"
+            if hotels:
+                response += "\\n추천 숙소:\\n"
+                for hotel in hotels:
+                    response += f"• {hotel.get('name', 'N/A')}: {hotel.get('price_per_night', 0):,}원/박\\n"
+            response += "\\n더 자세한 정보가 필요하시면 언제든 문의해주세요!"
+            self.db.save_consultation_message(session_id, user_message, response)
+            return response
         
-현재 제주도, 부산, 강릉, 경주 등 다양한 국내 여행 상품을 준비하고 있습니다.
+        elif "경주" in user_message or "gyeongju" in user_message_lower:
+            packages = self.db.get_packages(destination="경주")
+            hotels = self.db.get_hotels(city="경주")
+            response = "🏛️ 경주 문화유산 여행 추천드립니다!\\n\\n"
+            if packages:
+                response += "추천 패키지:\\n"
+                for pkg in packages:
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원 ({pkg.get('duration', 'N/A')}일)\\n"
+            if hotels:
+                response += "\\n추천 숙소:\\n"
+                for hotel in hotels:
+                    response += f"• {hotel.get('name', 'N/A')}: {hotel.get('price_per_night', 0):,}원/박\\n"
+            response += "\\n더 자세한 정보가 필요하시면 언제든 문의해주세요!"
+            self.db.save_consultation_message(session_id, user_message, response)
+            return response
+        
+        elif "패키지" in user_message or "상품" in user_message or "추천" in user_message:
+            # 일반적인 패키지 문의
+            packages = self.db.get_packages()
+            response = "✨ 현재 준비된 여행 패키지를 소개해드릴게요!\\n\\n"
+            
+            destinations = {}
+            for pkg in packages:
+                dest = pkg.get('destination', '기타')
+                if dest not in destinations:
+                    destinations[dest] = []
+                destinations[dest].append(pkg)
+            
+            for dest, pkgs in destinations.items():
+                response += f"📍 {dest}:\\n"
+                for pkg in pkgs[:2]:  # 각 지역별 상위 2개
+                    response += f"• {pkg.get('name', 'N/A')}: {pkg.get('price', 0):,}원\\n"
+                response += "\\n"
+            
+            response += "원하시는 지역이나 예산을 말씀해주시면 더 자세히 추천해드릴게요!"
+            self.db.save_consultation_message(session_id, user_message, response)
+            return response
+        
+        # 기본 응답
+        response = """안녕하세요! 저희 여행사에 문의해 주셔서 감사합니다. 🌟
+        
+현재 제주도, 부산, 강릉, 경주 등 다양한 국내 여행 상품과 다낭 해외 패키지를 준비하고 있습니다.
 
 어떤 여행을 원하시나요?
-• 여행 목적지
+• 여행 목적지 (제주도, 부산, 강릉, 경주, 다낭)
 • 여행 기간  
 • 예산 범위
 • 선호하는 여행 스타일
 
 자세히 알려주시면 맞춤 추천해드리겠습니다!"""
+        
+        # 기본 응답도 저장
+        self.db.save_consultation_message(session_id, user_message, response)
+        return response
