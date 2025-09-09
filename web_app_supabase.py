@@ -224,14 +224,19 @@ async def chat_endpoint(request: ChatRequest):
             request.message, session_id
         )
         
-        # Response debug info removed due to encoding issues
+        print(f"AI response type: {type(response)}")
+        print(f"AI response is None: {response is None}")
         
         if response is None:
             response = "Sorry, I cannot generate a response at this time."
+        elif not response or response.strip() == "":
+            response = "Sorry, I couldn't generate a proper response. Please try again."
             
         return ChatResponse(response=response, session_id=session_id)
     
     except Exception as e:
+        print(f"Chat endpoint error: {e}")
+        print(f"Error type: {type(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/packages")
