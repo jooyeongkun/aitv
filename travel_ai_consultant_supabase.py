@@ -38,19 +38,19 @@ class TravelAIConsultantSupabase:
                 print("Database info retrieved (contains Korean characters)")
             
             prompt = f"""
-            당신은 한국 여행 전문 상담사입니다. 아래 회사 데이터베이스 정보를 활용해서 간결하게 답변하세요:
+            여행 전문 상담사로서 아래 상품을 활용해 간결하게 답변하세요:
 
             {db_info}
 
-            고객 문의: {user_message}
+            질문: {user_message}
 
-            답변 요구사항:
-            1. 3-4문장으로 간단하게 답변
-            2. 가장 적합한 1-2개 상품만 추천
-            3. 가격 정보 포함
-            4. 친근한 톤
+            답변 규칙:
+            1. 인사말 생략, 바로 추천 시작
+            2. 1-2문장으로 최적 상품 1개만 추천  
+            3. 가격 명시
+            4. 간결하고 직접적으로
 
-            너무 길게 설명하지 말고 핵심만 간단히 답변하세요.
+            예시: "제주 3박4일 패키지 45만원 추천드려요. 항공료, 숙박, 렌터카 포함입니다."
             """
             
             print("Calling Gemini API...")
