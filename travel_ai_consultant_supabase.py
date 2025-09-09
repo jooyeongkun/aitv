@@ -80,7 +80,10 @@ class TravelAIConsultantSupabase:
             pass  # 아래 규칙 기반 응답으로 진행
             
         # 규칙 기반 응답 (백업) - 구체적인 키워드부터 확인
-        print(f"Checking keywords in message: '{user_message}'")
+        try:
+            print(f"Checking keywords in message: '{user_message}'")
+        except UnicodeEncodeError:
+            print("Checking keywords in message (contains Korean characters)")
         
         # 다낭/해외 여행 키워드 감지 (우선순위 높음)
         if "다낭" in user_message or "danang" in user_message_lower:
