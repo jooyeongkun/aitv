@@ -775,22 +775,28 @@ async def admin_page():
             // 상담 세션 선택
             async function selectSession(sessionId) {
                 console.log('selectSession 함수 호출됨:', sessionId);
-                alert('세션 클릭됨: ' + sessionId); // 테스트용
                 
                 try {
+                    console.log('API 호출 시작:', `/admin/consultations/${sessionId}`);
                     const response = await fetch(`/admin/consultations/${sessionId}`);
                     console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        const errorText = await response.text();
+                        console.error('Response error text:', errorText);
+                        throw new Error(`HTTP error! status: ${response.status}, text: ${errorText}`);
                     }
                     
                     const data = await response.json();
                     console.log('Response data:', data);
+                    console.log('Messages count:', data.messages ? data.messages.length : 'undefined');
                     
                     let html = '';
                     if (data.messages && data.messages.length > 0) {
-                        data.messages.forEach(msg => {
+                        console.log('메시지 처리 시작');
+                        data.messages.forEach((msg, index) => {
+                            console.log(`메시지 ${index}:`, msg);
                             const type = msg.role === 'user' ? 'user' : 'ai';
                             const time = new Date(msg.timestamp).toLocaleString();
                             html += `<div class="message ${type}" style="margin: 10px 0; padding: 10px; border-radius: 10px; background: ${type === 'user' ? '#e3f2fd' : '#f3e5f5'};">
@@ -799,10 +805,12 @@ async def admin_page():
                             </div>`;
                         });
                     } else {
+                        console.log('메시지가 없음');
                         html = '<div style="text-align: center; color: #666; padding: 20px;">이 세션에는 메시지가 없습니다.</div>';
                     }
                     
                     document.getElementById('consultationChat').innerHTML = html;
+                    console.log('HTML 업데이트 완료');
                     
                     // 선택된 세션 하이라이트
                     document.querySelectorAll('.session-item').forEach(item => {
@@ -811,6 +819,7 @@ async def admin_page():
                     event.target.closest('.session-item').style.background = '#e3f2fd';
                 } catch (error) {
                     console.error('Error loading consultation messages:', error);
+                    console.error('Error stack:', error.stack);
                     document.getElementById('consultationChat').innerHTML = `<div class="error">상담 내용 로드 실패: ${error.message}</div>`;
                 }
             }
