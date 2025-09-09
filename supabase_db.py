@@ -44,21 +44,11 @@ class SupabaseDB:
     def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None, sender_type: str = "ai"):
         """상담 메시지 저장 (AI 또는 인간 상담사)"""
         try:
-            # 인코딩 문제 해결을 위해 문자열 정리
-            def clean_text(text):
-                if text is None:
-                    return None
-                # UTF-8로 인코딩 후 다시 디코딩하여 깨진 문자 정리
-                try:
-                    return text.encode('utf-8').decode('utf-8')
-                except:
-                    return str(text)
-            
             data = {
                 "session_id": session_id,
-                "user_message": clean_text(user_message),
-                "ai_response": clean_text(ai_response),
-                "human_response": clean_text(human_response),
+                "user_message": user_message,
+                "ai_response": ai_response,
+                "human_response": human_response,
                 "sender_type": sender_type,  # 'ai', 'human', 'user'
                 "created_at": datetime.now().isoformat()
             }
@@ -299,15 +289,11 @@ class SupabaseDB:
     def get_consultation_messages(self, session_id: str) -> List[Dict]:
         """상담 메시지 조회 (관리자용)"""
         try:
-            print(f"Getting messages for session: {session_id}")
             messages = self.get_session_messages(session_id)
-            print(f"Raw messages count: {len(messages)}")
             
             # 메시지를 관리자 페이지용 형식으로 변환
             formatted_messages = []
             for msg in messages:
-                print(f"Processing message: {msg}")
-                
                 # 사용자 메시지
                 if msg.get('user_message'):
                     formatted_messages.append({
@@ -332,7 +318,6 @@ class SupabaseDB:
                         'timestamp': msg['created_at']
                     })
             
-            print(f"Formatted messages count: {len(formatted_messages)}")
             return formatted_messages
         except Exception as e:
             print(f"Error getting consultation messages: {e}")
