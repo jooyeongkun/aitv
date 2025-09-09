@@ -21,9 +21,15 @@ class TravelAIConsultantSupabase:
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
         """여행 추천 생성 (Gemini AI + Supabase 데이터)"""
-        print(f"Processing travel recommendation request: {user_message}")
+        try:
+            print(f"Processing travel recommendation request: {user_message}")
+        except UnicodeEncodeError:
+            print("Processing travel recommendation request (contains Korean characters)")
         user_message_lower = user_message.lower()
-        print(f"Lowercase message: {user_message_lower}")
+        try:
+            print(f"Lowercase message: {user_message_lower}")
+        except UnicodeEncodeError:
+            print("Lowercase message (contains Korean characters)")
         
         # Gemini API 시도
         try:
@@ -69,36 +75,13 @@ class TravelAIConsultantSupabase:
             
         except Exception as e:
             print(f"Gemini API Error: {e}")
-            # 간단한 키워드 응답으로 fallback
-            if "안녕" in user_message:
-                return "Hello! I'm a Korean travel consultant!"
-            elif "제주" in user_message:
-                return "Jeju Island is great! What kind of trip are you planning?"
-            else:
-                return f"'{user_message}' 문의 감사합니다! 조금 더 구체적으로 말씀해주세요."
+            # API 할당량 초과시 자체 응답 시스템 사용
+            print("Using fallback response system due to API error")
+            pass  # 아래 규칙 기반 응답으로 진행
             
         # 규칙 기반 응답 (백업)
-        if "db" in user_message_lower or "데이터베이스" in user_message_lower or "저장" in user_message_lower:
-            packages = self.db.get_packages()
-            hotels = self.db.get_hotels()
-            
-            response = f"현재 저장된 데이터:\\n"
-            response += f"- 패키지: {len(packages)}개\\n"
-            response += f"- 호텔: {len(hotels)}개\\n\\n"
-            
-            if packages:
-                response += "주요 패키지:\\n"
-                for pkg in packages[:3]:  # 상위 3개만
-                    response += f"• {pkg.get('name', 'N/A')} - {pkg.get('price', 0):,}원\\n"
-            
-            if hotels:
-                response += "\\n주요 호텔:\\n"
-                for hotel in hotels[:3]:  # 상위 3개만
-                    response += f"• {hotel.get('name', 'N/A')} - {hotel.get('price_per_night', 0):,}원/박\\n"
-                    
-            return response
-        
-        elif "제주" in user_message_lower or "jeju" in user_message_lower:
+        # 제주도 키워드 감지 (인코딩 문제 대응)
+        if "제주" in user_message or "jeju" in user_message_lower or "패키지" in user_message:
             packages = self.db.get_packages(destination="제주")
             hotels = self.db.get_hotels(city="제주")
             
@@ -117,6 +100,29 @@ class TravelAIConsultantSupabase:
                     response += f"  위치: {hotel.get('address', 'N/A')}\\n\\n"
                     
             response += "더 자세한 정보가 필요하시면 언제든 문의해주세요!"
+            
+            # 상담 내용 저장
+            self.db.save_consultation_message(session_id, user_message, response)
+            return response
+        
+        elif "db" in user_message_lower or "데이터베이스" in user_message_lower or "저장" in user_message_lower:
+            packages = self.db.get_packages()
+            hotels = self.db.get_hotels()
+            
+            response = f"현재 저장된 데이터:\\n"
+            response += f"- 패키지: {len(packages)}개\\n"
+            response += f"- 호텔: {len(hotels)}개\\n\\n"
+            
+            if packages:
+                response += "주요 패키지:\\n"
+                for pkg in packages[:3]:  # 상위 3개만
+                    response += f"• {pkg.get('name', 'N/A')} - {pkg.get('price', 0):,}원\\n"
+            
+            if hotels:
+                response += "\\n주요 호텔:\\n"
+                for hotel in hotels[:3]:  # 상위 3개만
+                    response += f"• {hotel.get('name', 'N/A')} - {hotel.get('price_per_night', 0):,}원/박\\n"
+                    
             return response
         
         elif "부산" in user_message_lower or "busan" in user_message_lower:
