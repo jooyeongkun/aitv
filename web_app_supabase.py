@@ -449,30 +449,12 @@ async def admin_page():
             <h1>🏨 Travel AI 데이터 관리</h1>
             
             <div class="tabs">
-                <button class="tab active" data-tab="excel-mode" onclick="showTab('excel-mode', event)">엑셀 모드</button>
-                <button class="tab" data-tab="consultation" onclick="showTab('consultation', event)">상담 관리</button>
-            </div>
-
-            <!-- 엑셀 모드 탭 -->
-            <div id="excel-mode" class="content active">
-                <h2>📊 엑셀 모드 (인라인 편집)</h2>
-                <p style="color: #666; margin-bottom: 20px;">테이블 셀을 더블클릭하여 직접 편집하세요. Enter키로 저장, Escape키로 취소</p>
-                
-                <div style="margin-bottom: 30px;">
-                    <button onclick="loadExcelData()" style="background: #4CAF50;">🔄 데이터 새로고침</button>
-                    <button onclick="addNewRow('packages')" style="background: #2196F3;">➕ 새 패키지 추가</button>
-                    <button onclick="addNewRow('hotels')" style="background: #FF9800;">🏨 새 호텔 추가</button>
-                </div>
-                
-                <h3>📦 패키지 목록 (클릭하여 편집)</h3>
-                <div id="excelPackagesList" style="margin-bottom: 40px;"></div>
-                
-                <h3>🏨 호텔 목록 (클릭하여 편집)</h3>
-                <div id="excelHotelsList"></div>
+                <button class="tab active" data-tab="consultation" onclick="showTab('consultation', event)">상담 관리</button>
+                <button class="tab" data-tab="excel-mode" onclick="showTab('excel-mode', event)">엑셀 모드</button>
             </div>
 
             <!-- 상담 관리 탭 -->
-            <div id="consultation" class="content">
+            <div id="consultation" class="content active">
                 <h2>💬 상담 관리</h2>
                 
                 <div style="margin-bottom: 20px;">
@@ -499,6 +481,25 @@ async def admin_page():
                     </div>
                 </div>
             </div>
+
+            <!-- 엑셀 모드 탭 -->
+            <div id="excel-mode" class="content">
+                <h2>📊 엑셀 모드 (인라인 편집)</h2>
+                <p style="color: #666; margin-bottom: 20px;">테이블 셀을 더블클릭하여 직접 편집하세요. Enter키로 저장, Escape키로 취소</p>
+                
+                <div style="margin-bottom: 30px;">
+                    <button onclick="loadExcelData()" style="background: #4CAF50;">🔄 데이터 새로고침</button>
+                    <button onclick="addNewRow('packages')" style="background: #2196F3;">➕ 새 패키지 추가</button>
+                    <button onclick="addNewRow('hotels')" style="background: #FF9800;">🏨 새 호텔 추가</button>
+                </div>
+                
+                <h3>📦 패키지 목록 (클릭하여 편집)</h3>
+                <div id="excelPackagesList" style="margin-bottom: 40px;"></div>
+                
+                <h3>🏨 호텔 목록 (클릭하여 편집)</h3>
+                <div id="excelHotelsList"></div>
+            </div>
+
         </div>
 
         <script>
@@ -835,7 +836,7 @@ async def admin_page():
 
             // 페이지 로드 시 데이터 로드
             window.onload = function() {
-                loadExcelData();
+                loadConsultationData();
             }
         </script>
     </body>
