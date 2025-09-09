@@ -30,8 +30,24 @@ class TravelAIConsultantSupabase:
             if self.gemini_model is None:
                 raise Exception("Gemini model not initialized")
                 
-            # 간단한 프롬프트로 테스트
-            prompt = f"한국 여행 전문가로서 '{user_message}'에 대해 친근하게 한국어로 답변해주세요."
+            # DB 데이터를 활용한 프롬프트
+            db_info = self.db.get_all_data_summary()
+            
+            prompt = f"""
+            당신은 한국 여행 전문 상담사입니다. 아래 회사 데이터베이스 정보를 활용해서 고객에게 구체적인 상담을 제공하세요:
+
+            {db_info}
+
+            고객 문의: {user_message}
+
+            다음 사항을 포함해서 한국어로 친근하게 답변하세요:
+            1. 고객의 구체적인 요청에 맞는 패키지나 호텔 추천
+            2. 정확한 가격 정보 포함  
+            3. 친근하고 전문적인 톤
+            4. 추가 질문으로 더 나은 상담 유도
+
+            데이터베이스에 없는 내용을 묻는다면, 보유한 상품을 안내하세요.
+            """
             
             print(f"🔄 Gemini API 호출 중...")
             response = self.gemini_model.generate_content(prompt)
