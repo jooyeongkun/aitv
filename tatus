@@ -1,0 +1,3 @@
+[33mef187e4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m Fix encoding issue in file header - remove invalid character
+[33m8481771[m Fix showTab function error and add consultation management tab
+[33md7c2050[m Fix tab functionality and add Render deployment support

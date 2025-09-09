@@ -624,10 +624,10 @@ async def admin_page():
                 if (event && event.target) {
                     event.target.classList.add('active');
                 } else {
-                    // event가 없으면 data-tab 속성으로 찾기
-                    const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
-                    if (targetTab) {
-                        targetTab.classList.add('active');
+                    // event가 없는 경우 탭 이름으로 찾아서 active 추가
+                    const activeTab = document.querySelector(`button[onclick*="${tabName}"]`);
+                    if (activeTab) {
+                        activeTab.classList.add('active');
                     }
                 }
                 
@@ -1215,8 +1215,9 @@ async def admin_page():
                     if (data.sessions && data.sessions.length > 0) {
                         data.sessions.forEach(session => {
                             const date = new Date(session.created_at).toLocaleString();
-                            html += `<div class="session-item" onclick="selectSession('${session.id}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
-                                <strong>세션 ${session.id}</strong><br>
+                            const sessionId = session.session_id || session.id;
+                            html += `<div class="session-item" onclick="selectSession('${sessionId}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
+                                <strong>세션 ${sessionId.substring(0, 8)}...</strong><br>
                                 <small>${date}</small><br>
                                 <small>메시지: ${session.message_count || 0}개</small>
                             </div>`;
