@@ -66,6 +66,7 @@ class SupabaseDB:
     def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None, sender_type: str = "ai"):
         """상담 메시지 저장 (AI 또는 인간 상담사)"""
         try:
+            print(f"DB Save: Starting save process for session {session_id}")
             data = {
                 "session_id": session_id,
                 "user_message": user_message,
@@ -74,10 +75,15 @@ class SupabaseDB:
                 "sender_type": sender_type,  # 'ai', 'human', 'user'
                 "created_at": datetime.now().isoformat()
             }
-            self.client.table('consultation_messages').insert(data).execute()
-            print(f"Message saved to Supabase (sender: {sender_type})")
+            print(f"DB Save: Data prepared: {data}")
+            result = self.client.table('consultation_messages').insert(data).execute()
+            print(f"DB Save: Insert result: {result}")
+            print(f"Message saved to Supabase successfully (sender: {sender_type})")
         except Exception as e:
             print(f"Error saving consultation message: {e}")
+            print(f"Error type: {type(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
 
     def get_session_messages(self, session_id: str):
         """세션의 모든 메시지 조회"""

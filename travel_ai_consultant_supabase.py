@@ -76,9 +76,13 @@ class TravelAIConsultantSupabase:
                 
                 ai_response = response.choices[0].message.content
                 print(f"OpenAI response received: {ai_response[:50]}...")
+                print(f"Session ID: {session_id}")
+                print(f"User message: {user_message[:50]}...")
                 
                 # 상담 메시지를 Supabase에 저장
+                print("Attempting to save message to Supabase...")
                 self.db.save_consultation_message(session_id, user_message, ai_response)
+                print("Message save attempt completed")
                 
                 return ai_response
                 
