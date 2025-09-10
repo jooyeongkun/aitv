@@ -83,10 +83,26 @@ class TravelAIConsultantSupabase:
                 print("Attempting to save message to Supabase...")
                 try:
                     self.db.save_consultation_message(session_id, user_message, ai_response)
-                    print("Message save attempt completed")
+                    print("✅ Message saved to Supabase successfully")
                 except Exception as save_error:
-                    print(f"DB Save Error: {save_error}")
-                    print("Continuing without saving to DB...")
+                    print(f"❌ DB Save Error: {save_error}")
+                    print("🔄 Retrying with simplified data...")
+                    
+                    # 재시도: 간단한 데이터로 저장
+                    try:
+                        from datetime import datetime
+                        simple_data = {
+                            "session_id": session_id,
+                            "user_message": user_message[:500],  # 길이 제한
+                            "ai_response": ai_response[:500] if ai_response else None,
+                            "sender_type": "ai",
+                            "created_at": datetime.now().isoformat()
+                        }
+                        self.db.client.table('consultation_messages').insert(simple_data).execute()
+                        print("✅ Message saved with simplified data")
+                    except Exception as retry_error:
+                        print(f"❌ Retry also failed: {retry_error}")
+                        print("Continuing without saving to DB...")
                 
                 return ai_response
                 

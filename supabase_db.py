@@ -47,16 +47,15 @@ class SupabaseDB:
     def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None, sender_type: str = "ai"):
         """상담 메시지 저장 (AI 또는 인간 상담사)"""
         try:
-            print(f"DB Save: Starting save process for session {session_id}")
+            print(f"DB Save: Starting save process for session '{session_id}' (type: {type(session_id)})")
             data = {
                 "session_id": session_id,
                 "user_message": user_message,
                 "ai_response": ai_response,
-                "human_response": human_response,
                 "sender_type": sender_type,  # 'ai', 'human', 'user'
                 "created_at": datetime.now().isoformat()
             }
-            print(f"DB Save: Data prepared: {data}")
+            print(f"DB Save: Data prepared with session_id = '{data['session_id']}'")
             result = self.client.table('consultation_messages').insert(data).execute()
             print(f"DB Save: Insert result: {result}")
             print(f"Message saved to Supabase successfully (sender: {sender_type})")
@@ -69,11 +68,13 @@ class SupabaseDB:
     def get_session_messages(self, session_id: str):
         """세션의 모든 메시지 조회"""
         try:
+            print(f"DB Query: Looking for session_id = '{session_id}'")
             response = self.client.table('consultation_messages')\
                 .select("*")\
                 .eq('session_id', session_id)\
                 .order('created_at', desc=False)\
                 .execute()
+            print(f"DB Query: Found {len(response.data)} messages")
             return response.data
         except Exception as e:
             print(f"Error getting session messages: {e}")
@@ -334,13 +335,13 @@ class SupabaseDB:
                         'timestamp': msg['created_at']
                     })
                 
-                # 인간 상담사 응답
-                if msg.get('human_response'):
-                    formatted_messages.append({
-                        'role': 'human',
-                        'content': msg['human_response'],
-                        'timestamp': msg['created_at']
-                    })
+                # 인간 상담사 응답 (human_response 컬럼이 없으므로 제거)
+                # if msg.get('human_response'):
+                #     formatted_messages.append({
+                #         'role': 'human',
+                #         'content': msg['human_response'],
+                #         'timestamp': msg['created_at']
+                #     })
             
             return formatted_messages
         except Exception as e:
