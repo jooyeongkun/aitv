@@ -49,6 +49,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+    session_number: str = "N/A"
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
@@ -177,7 +178,7 @@ async def home():
                     
                     if (response.ok) {
                         const data = await response.json();
-                        addMessage('ai', data.response);
+                        addMessage('ai', data.response, data.session_number);
                         sessionId = data.session_id;
                         document.getElementById('status').textContent = 'Ready for next question';
                     } else {
@@ -190,11 +191,17 @@ async def home():
                 }
             }
             
-            function addMessage(type, text) {
+            function addMessage(type, text, sessionNumber = null) {
                 const chatbox = document.getElementById('chatbox');
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message ' + type;
-                messageDiv.innerHTML = '<strong>' + (type === 'user' ? 'You' : 'AI') + ':</strong> ' + text.replace(/\\n/g, '<br>');
+                
+                let messageText = '<strong>' + (type === 'user' ? 'You' : 'AI') + ':</strong> ' + text.replace(/\\n/g, '<br>');
+                if (sessionNumber && type === 'ai' && sessionNumber !== 'N/A') {
+                    messageText = '<div style="background: #e3f2fd; padding: 5px; border-radius: 5px; margin-bottom: 5px; font-size: 0.9em;"><strong>상담 #' + sessionNumber + '</strong></div>' + messageText;
+                }
+                
+                messageDiv.innerHTML = messageText;
                 chatbox.appendChild(messageDiv);
                 chatbox.scrollTop = chatbox.scrollHeight;
             }
@@ -216,8 +223,13 @@ async def chat_endpoint(request: ChatRequest):
         # 세션 ID가 없으면 새로 생성
         if not request.session_id:
             session_id = db.create_consultation_session()
+            # 새 세션의 번호 조회
+            session_info = db.get_session_info(session_id)
+            session_number = session_info.get('session_number', 'N/A') if session_info else 'N/A'
         else:
             session_id = request.session_id
+            session_info = db.get_session_info(session_id)
+            session_number = session_info.get('session_number', 'N/A') if session_info else 'N/A'
 
         # AI 응답 생성
         response = consultant.generate_travel_recommendation(
@@ -232,7 +244,7 @@ async def chat_endpoint(request: ChatRequest):
         elif not response or response.strip() == "":
             response = "Sorry, I couldn't generate a proper response. Please try again."
             
-        return ChatResponse(response=response, session_id=session_id)
+        return ChatResponse(response=response, session_id=session_id, session_number=str(session_number))
     
     except Exception as e:
         print(f"Chat endpoint error: {e}")
@@ -756,8 +768,10 @@ async def admin_page():
                         data.sessions.forEach(session => {
                             const date = new Date(session.created_at).toLocaleString();
                             const sessionId = session.session_id || session.id;
+                            const sessionNumber = session.session_number || 'N/A';
                             html += `<div class="session-item" onclick="selectSession('${sessionId}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
-                                <strong>세션 ${sessionId.substring(0, 8)}...</strong><br>
+                                <strong>상담 #${sessionNumber}</strong><br>
+                                <small>ID: ${sessionId.substring(0, 8)}...</small><br>
                                 <small>${date}</small><br>
                                 <small>메시지: ${session.message_count || 0}개</small>
                             </div>`;

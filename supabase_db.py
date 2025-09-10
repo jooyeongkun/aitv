@@ -26,16 +26,38 @@ class SupabaseDB:
             print(f"Supabase connection failed: {e}")
             return False
 
+    def get_next_session_number(self) -> int:
+        """다음 세션 번호 생성"""
+        try:
+            # 가장 최근 세션 번호 조회
+            response = self.client.table('consultation_sessions')\
+                .select('session_number')\
+                .order('session_number', desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if response.data and response.data[0].get('session_number'):
+                return response.data[0]['session_number'] + 1
+            else:
+                return 1  # 첫 번째 세션
+        except Exception as e:
+            print(f"Error getting next session number: {e}")
+            return 1
+
     def create_consultation_session(self) -> str:
         """상담 세션 생성"""
         session_id = str(uuid.uuid4())
+        session_number = self.get_next_session_number()
+        
         try:
             data = {
                 "session_id": session_id,
+                "session_number": session_number,
                 "created_at": datetime.now().isoformat(),
                 "status": "active"
             }
             self.client.table('consultation_sessions').insert(data).execute()
+            print(f"새 상담 세션 생성: #{session_number} (ID: {session_id})")
             return session_id
         except Exception as e:
             print(f"Error creating consultation session: {e}")
@@ -264,6 +286,21 @@ class SupabaseDB:
         except Exception as e:
             print(f"Error deleting all consultation data: {e}")
             return False
+
+    def get_session_info(self, session_id: str) -> Dict:
+        """특정 세션 정보 조회"""
+        try:
+            response = self.client.table('consultation_sessions')\
+                .select("*")\
+                .eq('session_id', session_id)\
+                .execute()
+            
+            if response.data:
+                return response.data[0]
+            return {}
+        except Exception as e:
+            print(f"Error getting session info: {e}")
+            return {}
 
     def get_consultation_sessions(self) -> List[Dict]:
         """상담 세션 목록 조회 (관리자용)"""
