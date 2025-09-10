@@ -52,7 +52,7 @@ class TravelAIConsultantSupabase:
                 db_info = self.db.get_all_data_summary()
                 
                 response = openai.ChatCompletion.create(
-                    model="gpt-5-nano",
+                    model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "당신은 전문 여행 상담사입니다. 한국어로 친절하고 정확한 여행 추천을 해주세요."},
                         {"role": "user", "content": f"""
