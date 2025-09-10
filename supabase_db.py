@@ -47,17 +47,15 @@ class SupabaseDB:
     def create_consultation_session(self) -> str:
         """상담 세션 생성"""
         session_id = str(uuid.uuid4())
-        session_number = self.get_next_session_number()
         
         try:
             data = {
                 "session_id": session_id,
-                "session_number": session_number,
                 "created_at": datetime.now().isoformat(),
                 "status": "active"
             }
             self.client.table('consultation_sessions').insert(data).execute()
-            print(f"새 상담 세션 생성: #{session_number} (ID: {session_id})")
+            print(f"새 상담 세션 생성: {session_id}")
             return session_id
         except Exception as e:
             print(f"Error creating consultation session: {e}")

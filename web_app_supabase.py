@@ -223,13 +223,8 @@ async def chat_endpoint(request: ChatRequest):
         # 세션 ID가 없으면 새로 생성
         if not request.session_id:
             session_id = db.create_consultation_session()
-            # 새 세션의 번호 조회
-            session_info = db.get_session_info(session_id)
-            session_number = session_info.get('session_number', 'N/A') if session_info else 'N/A'
         else:
             session_id = request.session_id
-            session_info = db.get_session_info(session_id)
-            session_number = session_info.get('session_number', 'N/A') if session_info else 'N/A'
 
         # AI 응답 생성
         response = consultant.generate_travel_recommendation(
@@ -244,7 +239,7 @@ async def chat_endpoint(request: ChatRequest):
         elif not response or response.strip() == "":
             response = "Sorry, I couldn't generate a proper response. Please try again."
             
-        return ChatResponse(response=response, session_id=session_id, session_number=str(session_number))
+        return ChatResponse(response=response, session_id=session_id, session_number="N/A")
     
     except Exception as e:
         print(f"Chat endpoint error: {e}")
@@ -768,9 +763,8 @@ async def admin_page():
                         data.sessions.forEach(session => {
                             const date = new Date(session.created_at).toLocaleString();
                             const sessionId = session.session_id || session.id;
-                            const sessionNumber = session.session_number || 'N/A';
                             html += `<div class="session-item" onclick="selectSession('${sessionId}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
-                                <strong>상담 #${sessionNumber}</strong><br>
+                                <strong>상담 세션</strong><br>
                                 <small>ID: ${sessionId.substring(0, 8)}...</small><br>
                                 <small>${date}</small><br>
                                 <small>메시지: ${session.message_count || 0}개</small>

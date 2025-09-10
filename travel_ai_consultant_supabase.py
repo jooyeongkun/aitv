@@ -81,8 +81,12 @@ class TravelAIConsultantSupabase:
                 
                 # 상담 메시지를 Supabase에 저장
                 print("Attempting to save message to Supabase...")
-                self.db.save_consultation_message(session_id, user_message, ai_response)
-                print("Message save attempt completed")
+                try:
+                    self.db.save_consultation_message(session_id, user_message, ai_response)
+                    print("Message save attempt completed")
+                except Exception as save_error:
+                    print(f"DB Save Error: {save_error}")
+                    print("Continuing without saving to DB...")
                 
                 return ai_response
                 
