@@ -3,11 +3,13 @@
 """
 import os
 import google.generativeai as genai
+import openai
 from supabase_db import SupabaseDB
 
 class TravelAIConsultantSupabase:
     def __init__(self, db: SupabaseDB):
         self.db = db
+        
         # Gemini API 설정
         api_key = os.getenv("GEMINI_API_KEY", "AIzaSyDiT1gqT-X8rvXJ1VgjOBP6P_vxri0xqv0")
         genai.configure(api_key=api_key)
@@ -18,6 +20,16 @@ class TravelAIConsultantSupabase:
         except Exception as e:
             print(f"Gemini model initialization failed: {e}")
             self.gemini_model = None
+        
+        # OpenAI API 설정
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if openai_api_key:
+            openai.api_key = openai_api_key
+            self.openai_available = True
+            print("OpenAI API initialized successfully")
+        else:
+            self.openai_available = False
+            print("OpenAI API key not found - using Gemini only")
         
     def generate_travel_recommendation(self, user_message: str, session_id: str) -> str:
         """여행 추천 생성 (Gemini AI + Supabase 데이터)"""
@@ -31,7 +43,50 @@ class TravelAIConsultantSupabase:
         except UnicodeEncodeError:
             print("Lowercase message (contains Korean characters)")
         
-        # Gemini API 시도
+        # OpenAI API 시도 (우선순위)
+        if self.openai_available:
+            try:
+                print("Trying OpenAI API...")
+                
+                # DB 데이터를 활용한 프롬프트
+                db_info = self.db.get_all_data_summary()
+                
+                response = openai.ChatCompletion.create(
+                    model="gpt-5-nano",
+                    messages=[
+                        {"role": "system", "content": "당신은 전문 여행 상담사입니다. 한국어로 친절하고 정확한 여행 추천을 해주세요."},
+                        {"role": "user", "content": f"""
+                        다음 데이터베이스 정보를 바탕으로 고객의 요청에 맞는 여행을 추천해주세요.
+                        
+                        데이터베이스 정보:
+                        {db_info}
+                        
+                        고객 요청: {user_message}
+                        
+                        다음 형식으로 답변해주세요:
+                        1. 고객 요청 분석
+                        2. 추천 여행지/패키지
+                        3. 예상 비용
+                        4. 추가 팁
+                        """}
+                    ],
+                    max_tokens=500,
+                    temperature=0.7
+                )
+                
+                ai_response = response.choices[0].message.content
+                print(f"OpenAI response received: {ai_response[:50]}...")
+                
+                # 상담 메시지를 Supabase에 저장
+                self.db.save_consultation_message(session_id, user_message, ai_response)
+                
+                return ai_response
+                
+            except Exception as e:
+                print(f"OpenAI API Error: {e}")
+                print("Falling back to Gemini API...")
+        
+        # Gemini API 시도 (백업)
         try:
             if self.gemini_model is None:
                 raise Exception("Gemini model not initialized")
@@ -77,6 +132,13 @@ class TravelAIConsultantSupabase:
             print(f"Gemini API Error: {e}")
             # API 할당량 초과시 자체 응답 시스템 사용
             print("Using fallback response system due to API error")
+            
+            # Gemini API 오류 메시지 추가
+            if "quota" in str(e).lower() or "limit" in str(e).lower():
+                print("Gemini API quota exceeded - using fallback system")
+            elif "api" in str(e).lower():
+                print("Gemini API error - using fallback system")
+            
             pass  # 아래 규칙 기반 응답으로 진행
             
         # 규칙 기반 응답 (백업) - 구체적인 키워드부터 확인
@@ -245,9 +307,9 @@ class TravelAIConsultantSupabase:
             self.db.save_consultation_message(session_id, user_message, response)
             return response
         
-        # 기본 응답
+        # 기본 응답 (Gemini API 백업 시스템)
         response = """안녕하세요! 저희 여행사에 문의해 주셔서 감사합니다. 🌟
-        
+
 현재 제주도, 부산, 강릉, 경주 등 다양한 국내 여행 상품과 다낭 해외 패키지를 준비하고 있습니다.
 
 어떤 여행을 원하시나요?
@@ -256,7 +318,9 @@ class TravelAIConsultantSupabase:
 • 예산 범위
 • 선호하는 여행 스타일
 
-자세히 알려주시면 맞춤 추천해드리겠습니다!"""
+자세히 알려주시면 맞춤 추천해드리겠습니다!
+
+💡 참고: 현재 AI 시스템이 일시적으로 제한되어 있어 기본 응답을 제공하고 있습니다."""
         
         # 기본 응답도 저장
         self.db.save_consultation_message(session_id, user_message, response)
