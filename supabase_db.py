@@ -26,23 +26,6 @@ class SupabaseDB:
             print(f"Supabase connection failed: {e}")
             return False
 
-    def get_next_session_number(self) -> int:
-        """다음 세션 번호 생성"""
-        try:
-            # 가장 최근 세션 번호 조회
-            response = self.client.table('consultation_sessions')\
-                .select('session_number')\
-                .order('session_number', desc=True)\
-                .limit(1)\
-                .execute()
-            
-            if response.data and response.data[0].get('session_number'):
-                return response.data[0]['session_number'] + 1
-            else:
-                return 1  # 첫 번째 세션
-        except Exception as e:
-            print(f"Error getting next session number: {e}")
-            return 1
 
     def create_consultation_session(self) -> str:
         """상담 세션 생성"""
