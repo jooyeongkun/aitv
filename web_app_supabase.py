@@ -764,7 +764,7 @@ async def admin_page():
                     let html = '';
                     if (data.sessions && data.sessions.length > 0) {
                         data.sessions.forEach(session => {
-                            const date = new Date(session.created_at).toLocaleString();
+                            const date = new Date(session.created_at).toLocaleString('ko-KR', {timeZone: 'UTC'});
                             const sessionId = session.session_id || session.id;
                             html += `<div class="session-item" onclick="selectSession('${sessionId}')" style="padding: 10px; border: 1px solid #ddd; margin: 5px 0; cursor: pointer; border-radius: 5px;">
                                 <strong>상담 세션</strong><br>
@@ -801,7 +801,7 @@ async def admin_page():
                     if (data.messages && data.messages.length > 0) {
                         data.messages.forEach(msg => {
                             const type = msg.role === 'user' ? 'user' : 'ai';
-                            const time = new Date(msg.timestamp).toLocaleString();
+                            const time = new Date(msg.timestamp).toLocaleString('ko-KR', {timeZone: 'UTC'});
                             html += `<div class="message ${type}" style="margin: 10px 0; padding: 10px; border-radius: 10px; background: ${type === 'user' ? '#e3f2fd' : '#f3e5f5'};">
                                 <strong>${type === 'user' ? '사용자' : 'AI'}:</strong> ${msg.content}<br>
                                 <small style="color: #666;">${time}</small>
