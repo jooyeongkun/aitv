@@ -222,8 +222,11 @@ async def chat_endpoint(request: ChatRequest):
     try:
         # 세션 ID가 없으면 새로 생성
         if not request.session_id:
+            print(f"Creating new session for message: {request.message[:50]}...")
             session_id = db.create_consultation_session()
+            print(f"Created session ID: {session_id}")
         else:
+            print(f"Using existing session ID: {request.session_id}")
             session_id = request.session_id
 
         # AI 응답 생성

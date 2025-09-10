@@ -44,7 +44,7 @@ class SupabaseDB:
             print(f"Error creating consultation session: {e}")
             return session_id
 
-    def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None, sender_type: str = "ai"):
+    def save_consultation_message(self, session_id: str, user_message: str, ai_response: str = None, human_response: str = None):
         """상담 메시지 저장 (AI 또는 인간 상담사)"""
         try:
             print(f"DB Save: Starting save process for session '{session_id}' (type: {type(session_id)})")
