@@ -95,7 +95,6 @@ class TravelAIConsultantSupabase:
                             "session_id": session_id,
                             "user_message": user_message[:500],  # 길이 제한
                             "ai_response": ai_response[:500] if ai_response else None,
-                            "sender_type": "ai",
                             "created_at": datetime.now().isoformat()
                         }
                         self.db.client.table('consultation_messages').insert(simple_data).execute()

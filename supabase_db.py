@@ -52,13 +52,12 @@ class SupabaseDB:
                 "session_id": session_id,
                 "user_message": user_message,
                 "ai_response": ai_response,
-                "sender_type": sender_type,  # 'ai', 'human', 'user'
                 "created_at": datetime.now().isoformat()
             }
             print(f"DB Save: Data prepared with session_id = '{data['session_id']}'")
             result = self.client.table('consultation_messages').insert(data).execute()
             print(f"DB Save: Insert result: {result}")
-            print(f"Message saved to Supabase successfully (sender: {sender_type})")
+            print(f"Message saved to Supabase successfully")
         except Exception as e:
             print(f"Error saving consultation message: {e}")
             print(f"Error type: {type(e)}")
