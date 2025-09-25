@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import os
 import json
 import re
@@ -8,13 +8,16 @@ load_dotenv()
 
 # 환경에 따라 다른 데이터베이스 모듈 사용
 if os.getenv('USE_SUPABASE', 'false').lower() == 'true':
-    from database_requests import search_hotels, search_tours
+    try:
+        from database_requests import search_hotels, search_tours
+    except ImportError:
+        from database import search_hotels, search_tours
 else:
     from database import search_hotels, search_tours
 
 class TravelAI:
     def __init__(self):
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.last_search_results = {'hotels': [], 'tours': []}  # 마지막 검색 결과 저장
         self.conversation_history = {}  # conversation_id별 대화 히스토리
         self.response_cache = {}  # 응답 캐시
@@ -1102,7 +1105,7 @@ class TravelAI:
             except:
                 print("Debug info (Korean text)")
 
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "당신은 이여행사 직원입니다. 각 투어상품, 호텔, 기타 서비스를 헷갈리지 않게 정확히 답변하세요."},
