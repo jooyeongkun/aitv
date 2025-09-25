@@ -1,0 +1,592 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const HotelManagement = () => {
+  const [hotels, setHotels] = useState([]);
+  const [filteredHotels, setFilteredHotels] = useState([]);
+  const [adminInfo, setAdminInfo] = useState(null);
+  const [editingCell, setEditingCell] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentDetail, setCurrentDetail] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // 로그인 확인
+    const token = localStorage.getItem('admin-token');
+    const savedAdminInfo = localStorage.getItem('admin-info');
+    
+    if (!token || !savedAdminInfo) {
+      navigate('/admin');
+      return;
+    }
+
+    setAdminInfo(JSON.parse(savedAdminInfo));
+    fetchHotels();
+  }, [navigate]);
+
+  const fetchHotels = async () => {
+    try {
+      const response = await axios.get('http://localhost:3004/api/hotels');
+      setHotels(response.data);
+      setFilteredHotels(response.data);
+    } catch (error) {
+      console.error('호텔 데이터 가져오기 실패:', error);
+    }
+  };
+
+  // 검색 기능
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredHotels(hotels);
+    } else {
+      const filtered = hotels.filter(hotel => 
+        hotel.hotel_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        hotel.hotel_region?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        hotel.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredHotels(filtered);
+    }
+  }, [searchTerm, hotels]);
+
+  const logout = () => {
+    localStorage.removeItem('admin-token');
+    localStorage.removeItem('admin-info');
+    navigate('/admin');
+  };
+
+  const addNewHotel = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const newHotel = {
+      id: 'new',
+      hotel_name: '',
+      hotel_region: '',
+      promotion_start: today,
+      promotion_end: today,
+      adult_price: null,
+      child_price: null,
+      child_criteria: '',
+      description: '',
+      is_active: true
+    };
+    setHotels([newHotel, ...hotels]);
+    setEditingCell({ row: 0, col: 'hotel_name' });
+  };
+
+  const updateHotel = async (index, field, value) => {
+    const hotel = hotels[index];
+    
+    // 로컬 상태 먼저 업데이트
+    const updatedHotels = [...hotels];
+    updatedHotels[index][field] = value;
+    setHotels(updatedHotels);
+    
+    try {
+      if (hotel.id !== 'new') {
+        // 기존 호텔만 DB 업데이트 (새 호텔은 저장하지 않음)
+        await axios.put(`http://localhost:3004/api/hotels/${hotel.id}`, {
+          [field]: value
+        });
+      }
+    } catch (error) {
+      console.error('호텔 업데이트 실패:', error);
+    }
+  };
+
+  const deleteHotel = async (index) => {
+    const hotel = hotels[index];
+    
+    console.log('삭제 시도:', hotel);
+    
+    if (hotel.id !== 'new') {
+      try {
+        console.log(`DELETE 요청: http://localhost:3004/api/hotels/${hotel.id}`);
+        const response = await axios.delete(`http://localhost:3004/api/hotels/${hotel.id}`);
+        console.log('삭제 응답:', response);
+      } catch (error) {
+        console.error('호텔 삭제 실패:', error);
+        return; // 에러가 발생하면 로컬 상태는 업데이트하지 않음
+      }
+    }
+    
+    const updatedHotels = hotels.filter((_, i) => i !== index);
+    setHotels(updatedHotels);
+    console.log('로컬 상태 업데이트 완료');
+  };
+
+  const toggleActiveStatus = async (index) => {
+    const hotel = hotels[index];
+    const newStatus = !hotel.is_active;
+    
+    console.log('활성화 상태 변경:', hotel.hotel_name, '→', newStatus);
+    
+    // 로컬 상태 먼저 업데이트
+    const updatedHotels = [...hotels];
+    updatedHotels[index].is_active = newStatus;
+    setHotels(updatedHotels);
+    
+    // DB 업데이트 (새 호텔이 아닌 경우만)
+    if (hotel.id !== 'new') {
+      try {
+        await axios.put(`http://localhost:3004/api/hotels/${hotel.id}`, {
+          is_active: newStatus
+        });
+        console.log('활성화 상태 DB 업데이트 완료');
+      } catch (error) {
+        console.error('활성화 상태 업데이트 실패:', error);
+      }
+    }
+  };
+
+  const duplicateHotel = (index) => {
+    const hotel = hotels[index];
+    console.log('복제 시도:', hotel, 'index:', index);
+    const duplicatedHotel = {
+      ...hotel,
+      id: 'new',
+      hotel_name: hotel.hotel_name + ' (복제본)'
+    };
+    
+    const updatedHotels = [...hotels];
+    updatedHotels.splice(index + 1, 0, duplicatedHotel);
+    setHotels(updatedHotels);
+    console.log('복제 완료');
+  };
+
+  const saveNewHotel = async (index) => {
+    const hotel = hotels[index];
+    console.log('저장 시도:', hotel, 'index:', index);
+    
+    if (!hotel.hotel_name || hotel.hotel_name.trim() === '') {
+      alert('호텔명을 입력해주세요.');
+      return;
+    }
+    
+    try {
+      console.log('POST 요청:', hotel);
+      const response = await axios.post('http://localhost:3004/api/hotels', hotel);
+      console.log('저장 응답:', response.data);
+      const updatedHotels = [...hotels];
+      updatedHotels[index] = response.data;
+      setHotels(updatedHotels);
+      console.log('저장 완료');
+    } catch (error) {
+      console.error('호텔 저장 실패:', error);
+    }
+  };
+
+  const EditableCell = ({ value, row, col, type = 'text', placeholder = '입력하세요', multiline = false }) => {
+    const [inputValue, setInputValue] = useState(value);
+    const [clickTimer, setClickTimer] = useState(null);
+    const isEditing = editingCell?.row === row && editingCell?.col === col;
+
+    useEffect(() => {
+      if (!isEditing) {
+        setInputValue(value || '');
+      }
+    }, [value, isEditing]);
+
+    useEffect(() => {
+      return () => {
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+        }
+      };
+    }, [clickTimer]);
+
+    const handleClick = () => {
+      if (!isEditing) {
+        if (col === 'description' && value) {
+          // 더블클릭 감지를 위해 딜레이 설정
+          const timer = setTimeout(() => {
+            setCurrentDetail(value);
+            setShowDetailModal(true);
+          }, 200);
+          setClickTimer(timer);
+          return;
+        }
+        setEditingCell({ row, col });
+        setInputValue(value || '');
+      }
+    };
+
+    const handleSave = () => {
+      let saveValue = inputValue;
+      
+      // 가격 필드인 경우 콤마 제거 후 저장
+      if ((col === 'adult_price' || col === 'child_price') && inputValue && typeof inputValue === 'string') {
+        saveValue = inputValue.replace(/,/g, '');
+      }
+      
+      updateHotel(row, col, saveValue);
+      setEditingCell(null);
+    };
+
+    const getFieldName = (fieldName) => {
+      const fieldNames = {
+        hotel_name: '호텔명',
+        hotel_region: '지역',
+        adult_price: '성인가격',
+        child_price: '아동가격',
+        child_criteria: '아동기준',
+        description: '상세내용'
+      };
+      return fieldNames[fieldName] || fieldName;
+    };
+
+    const handleKeyPress = (e) => {
+      if (e.key === 'Enter' && !multiline) {
+        handleSave();
+      }
+      if (e.key === 'Escape') {
+        setEditingCell(null);
+        setInputValue(value);
+      }
+      // Ctrl+Enter로 저장 (multiline인 경우)
+      if (e.key === 'Enter' && e.ctrlKey && multiline) {
+        handleSave();
+      }
+      // Tab 키로 다음 셀로 이동
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        handleSave();
+        moveToNextCell();
+      }
+    };
+
+    const moveToNextCell = () => {
+      const columns = ['hotel_name', 'hotel_region', 'promotion_start', 'promotion_end', 'adult_price', 'child_price', 'child_criteria', 'description'];
+      const currentColIndex = columns.indexOf(col);
+      const totalRows = filteredHotels.length;
+      
+      let nextRow = row;
+      let nextCol = col;
+      
+      if (currentColIndex < columns.length - 1) {
+        // 같은 행의 다음 열로 이동
+        nextCol = columns[currentColIndex + 1];
+      } else if (row < totalRows - 1) {
+        // 다음 행의 첫 번째 열로 이동
+        nextRow = row + 1;
+        nextCol = columns[0];
+      } else {
+        // 마지막 셀인 경우 편집 모드 종료
+        setEditingCell(null);
+        return;
+      }
+      
+      // 다음 셀로 이동
+      setTimeout(() => {
+        setEditingCell({ row: nextRow, col: nextCol });
+        setInputValue(filteredHotels[nextRow][nextCol] || '');
+      }, 50);
+    };
+
+    if (isEditing) {
+      if (multiline) {
+        return (
+          <textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyPress}
+            className="editable-textarea"
+            placeholder={`${placeholder} (Ctrl+Enter로 저장)`}
+            autoFocus
+            rows={3}
+          />
+        );
+      } else {
+        const handleInputChange = (e) => {
+          let value = e.target.value;
+          
+          // 가격 필드인 경우 실시간으로 콤마 추가
+          if (col === 'adult_price' || col === 'child_price') {
+            // 숫자가 아닌 문자 제거 (콤마 제외)
+            value = value.replace(/[^0-9,]/g, '');
+            // 기존 콤마 모두 제거
+            value = value.replace(/,/g, '');
+            // 콤마 추가
+            if (value) {
+              value = Number(value).toLocaleString();
+            }
+          }
+          
+          setInputValue(value);
+        };
+
+        return (
+          <input
+            type={type}
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleSave}
+            onKeyDown={handleKeyPress}
+            className="editable-input"
+            placeholder={placeholder}
+            autoFocus
+          />
+        );
+      }
+    }
+
+    const displayValue = () => {
+      if (!value) return placeholder;
+      
+      // 가격 필드인 경우 콤마 추가
+      if ((col === 'adult_price' || col === 'child_price') && value) {
+        return Number(value).toLocaleString();
+      }
+      
+      // multiline 필드의 경우 100자 이상이면 ...로 자르기
+      if (multiline && value.length > 100) {
+        return value.substring(0, 100) + '...';
+      }
+      
+      return value;
+    };
+
+    const handleDoubleClick = (e) => {
+      e.preventDefault();
+      // 단일 클릭 타이머 취소
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        setClickTimer(null);
+      }
+      if (col === 'description') {
+        setEditingCell({ row, col });
+        setInputValue(value || '');
+      }
+    };
+
+    return (
+      <div 
+        className="editable-cell" 
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        title={col === 'description' && value ? "클릭: 전체보기" : ""}
+      >
+        {displayValue()}
+        {col === 'description' && value && (
+          <button 
+            className="edit-icon-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ row, col });
+              setInputValue(value || '');
+            }}
+            title="편집"
+          >
+            ✏️
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const PromotionEndCell = ({ hotel, row }) => {
+    const handleUnlimitedChange = async (checked) => {
+      // 로컬 상태 즉시 업데이트
+      const updatedHotels = [...hotels];
+      if (checked) {
+        updatedHotels[row].promotion_end = '9999-12-31';
+      } else {
+        updatedHotels[row].promotion_end = new Date().toISOString().split('T')[0];
+      }
+      setHotels(updatedHotels);
+      
+      // DB 업데이트 - promotion_end만 업데이트
+      const hotel = updatedHotels[row];
+      try {
+        if (hotel.id !== 'new') {
+          const updateData = {
+            promotion_end: checked ? '9999-12-31' : new Date().toISOString().split('T')[0]
+          };
+          await axios.put(`http://localhost:3004/api/hotels/${hotel.id}`, updateData);
+        }
+      } catch (error) {
+        console.error('무제한 설정 업데이트 실패:', error);
+      }
+    };
+
+    if (hotel.promotion_end === '9999-12-31') {
+      return (
+        <div className="promotion-end-cell">
+          <div className="unlimited-display">
+            <span>무제한</span>
+            <input
+              type="checkbox"
+              checked={true}
+              onChange={(e) => handleUnlimitedChange(e.target.checked)}
+              style={{ marginLeft: '8px' }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="promotion-end-cell">
+        <div className="date-with-checkbox">
+          <EditableCell 
+            value={hotel.promotion_end} 
+            row={row} 
+            col="promotion_end" 
+            type="date" 
+          />
+          <label className="unlimited-label">
+            <input
+              type="checkbox"
+              checked={false}
+              onChange={(e) => handleUnlimitedChange(e.target.checked)}
+            />
+            <span>무제한</span>
+          </label>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-dashboard">
+      {/* 좌측 네비게이션 */}
+      <div className="admin-sidebar">
+        <div className="nav-tabs">
+          <div className="nav-tab" onClick={() => navigate('/admin/dashboard')}>채팅</div>
+          <div className="nav-tab" onClick={() => navigate('/admin/statistics')}>통계</div>
+          <div className="nav-tab active">호텔</div>
+          <div className="nav-tab" onClick={() => navigate('/admin/tours')}>투어</div>
+          <div className="nav-tab">렌트카</div>
+          <div className="nav-tab">티켓</div>
+          <div className="nav-tab">기타</div>
+        </div>
+      </div>
+      
+      {/* 호텔 관리 메인 화면 */}
+      <div className="hotel-main">
+        <div className="hotel-header">
+          <div className="hotel-title">
+            <h2>호텔 관리</h2>
+            <button onClick={addNewHotel} className="add-btn">+ 새 호텔</button>
+          </div>
+          
+          <div className="admin-info">
+            <input
+              type="text"
+              placeholder="호텔명, 지역, 상세내용 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <p>{adminInfo?.name}님</p>
+            <button onClick={logout} className="logout-btn">로그아웃</button>
+          </div>
+        </div>
+        
+        <div className="hotel-table-container">
+          <table className="hotel-table">
+            <thead>
+              <tr>
+                <th>호텔명</th>
+                <th>지역</th>
+                <th>프로모션시작</th>
+                <th>프로모션종료</th>
+                <th>성인가격</th>
+                <th>아동가격</th>
+                <th>아동기준</th>
+                <th>상세내용</th>
+                <th>옵션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredHotels.map((hotel, index) => (
+                <tr key={hotel.id}>
+                  <td>
+                    <EditableCell value={hotel.hotel_name} row={index} col="hotel_name" placeholder="호텔명을 입력하세요" />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.hotel_region} row={index} col="hotel_region" placeholder="지역을 입력하세요" />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.promotion_start} row={index} col="promotion_start" type="date" />
+                  </td>
+                  <td>
+                    <PromotionEndCell hotel={hotel} row={index} />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.adult_price} row={index} col="adult_price" type="text" placeholder="성인가격을 입력하세요" />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.child_price} row={index} col="child_price" type="text" placeholder="아동가격을 입력하세요" />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.child_criteria} row={index} col="child_criteria" placeholder="아동기준을 입력하세요" />
+                  </td>
+                  <td>
+                    <EditableCell value={hotel.description} row={index} col="description" placeholder="상세내용을 입력하세요" multiline={true} />
+                  </td>
+                  <td>
+                    <div className="option-buttons">
+                      {hotel.id === 'new' ? (
+                        <button 
+                          onClick={() => saveNewHotel(index)}
+                          className="save-btn"
+                        >
+                          저장
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => toggleActiveStatus(index)}
+                            className={hotel.is_active ? "active-btn" : "inactive-btn"}
+                          >
+                            {hotel.is_active ? "활성화" : "비활성화"}
+                          </button>
+                          <button 
+                            onClick={() => duplicateHotel(index)}
+                            className="duplicate-btn"
+                          >
+                            복제
+                          </button>
+                        </>
+                      )}
+                      <button 
+                        onClick={() => deleteHotel(index)}
+                        className="delete-btn"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      {/* 상세내용 모달 */}
+      {showDetailModal && (
+        <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>상세내용 전체보기</h3>
+              <button 
+                className="modal-close"
+                onClick={() => setShowDetailModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <pre>{currentDetail}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default HotelManagement;

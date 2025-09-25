@@ -1,0 +1,211 @@
+import openai
+import os
+import json
+import re
+from dotenv import load_dotenv
+from database import search_hotels, search_tours
+
+load_dotenv()
+
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
+class TravelAI:
+    def __init__(self):
+        self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    
+    def extract_keywords(self, user_message):
+        """사용자 메시지에서 키워드 추출"""
+        import re
+        
+        # 빈 메시지 처리
+        if not user_message or user_message.strip() == '':
+            return []
+        
+        keywords = []
+        
+        # 지역 키워드
+        regions = ['다낭', '푸꼭', '호이안', '나트랑', '호치민', '하노이', '제주', '부산', '서울']
+        for region in regions:
+            if region in user_message:
+                keywords.append(region)
+        
+        # 호텔 관련 키워드
+        hotel_keywords = ['호텔', '숙박', '리조트', '펜션', '게스트하우스', '객실', '룸']
+        for keyword in hotel_keywords:
+            if keyword in user_message:
+                keywords.append(keyword)
+        
+        # 투어 관련 키워드
+        tour_keywords = ['투어', '여행', '관광', '체험', '액티비티', '일정']
+        for keyword in tour_keywords:
+            if keyword in user_message:
+                keywords.append(keyword)
+        
+        # 한글 단어 추출 (2글자 이상)
+        korean_words = re.findall(r'[가-힣]{2,}', user_message)
+        for word in korean_words:
+            if word not in keywords:
+                keywords.append(word)
+        
+        # 영문 단어 추출
+        english_words = re.findall(r'[a-zA-Z]{2,}', user_message)
+        for word in english_words:
+            if word.lower() not in [k.lower() for k in keywords]:
+                keywords.append(word)
+        
+        # 중복 제거하고 최대 5개만
+        unique_keywords = []
+        for k in keywords:
+            if k not in unique_keywords:
+                unique_keywords.append(k)
+        
+        return unique_keywords[:5]
+    
+    def determine_intent(self, user_message):
+        """사용자 의도 파악"""
+        user_message_lower = user_message.lower()
+        
+        if any(keyword in user_message_lower for keyword in ['호텔', '숙박', '리조트', '펜션']):
+            return 'hotel'
+        elif any(keyword in user_message_lower for keyword in ['투어', '관광', '체험', '액티비티']):
+            return 'tour'
+        elif any(keyword in user_message_lower for keyword in ['가격', '비용', '요금', '얼마']):
+            return 'price'
+        else:
+            return 'general'
+    
+    def search_database(self, keywords, intent):
+        """데이터베이스에서 검색"""
+        hotels = []
+        tours = []
+        
+        if intent in ['hotel', 'general', 'price']:
+            hotels = search_hotels(keywords)
+        
+        if intent in ['tour', 'general', 'price']:
+            tours = search_tours(keywords)
+        
+        return hotels, tours
+    
+    def format_hotel_info(self, hotel):
+        """호텔 정보 포맷팅"""
+        info = f"🏨 **{hotel['hotel_name']}** ({hotel['hotel_region']})\n"
+        
+        if hotel['adult_price']:
+            info += f"💰 성인: {hotel['adult_price']:,}원"
+            if hotel['child_price']:
+                info += f" / 어린이: {hotel['child_price']:,}원"
+            info += "\n"
+        
+        if hotel['promotion_start'] and hotel['promotion_end']:
+            if hotel['is_unlimited']:
+                info += f"📅 프로모션: 무제한\n"
+            else:
+                info += f"📅 프로모션: {hotel['promotion_start']} ~ {hotel['promotion_end']}\n"
+        
+        if hotel['child_criteria']:
+            info += f"👶 어린이 기준: {hotel['child_criteria']}\n"
+        
+        if hotel['description']:
+            info += f"📝 {hotel['description'][:100]}{'...' if len(hotel['description']) > 100 else ''}\n"
+        
+        return info
+    
+    def format_tour_info(self, tour):
+        """투어 정보 포맷팅"""
+        info = f"🚌 **{tour['tour_name']}** ({tour['tour_region']})\n"
+        
+        if tour['duration']:
+            info += f"⏰ 기간: {tour['duration']}\n"
+        
+        prices = []
+        if tour['adult_price']:
+            prices.append(f"성인: {tour['adult_price']:,}원")
+        if tour['child_price']:
+            prices.append(f"어린이: {tour['child_price']:,}원")
+        if tour['infant_price']:
+            prices.append(f"유아: {tour['infant_price']:,}원")
+        
+        if prices:
+            info += f"💰 {' / '.join(prices)}\n"
+        
+        if tour['child_criteria']:
+            info += f"👶 어린이 기준: {tour['child_criteria']}\n"
+        if tour['infant_criteria']:
+            info += f"👶 유아 기준: {tour['infant_criteria']}\n"
+        
+        if tour['description']:
+            info += f"📝 {tour['description'][:100]}{'...' if len(tour['description']) > 100 else ''}\n"
+        
+        return info
+    
+    def generate_response(self, user_message, hotels, tours):
+        """AI 응답 생성"""
+        try:
+            # 컨텍스트 준비
+            context = f"사용자 질문: {user_message}\n\n"
+            
+            if hotels:
+                context += "호텔 정보:\n"
+                for hotel in hotels[:3]:  # 최대 3개만
+                    context += self.format_hotel_info(hotel) + "\n"
+            
+            if tours:
+                context += "투어 정보:\n"
+                for tour in tours[:3]:  # 최대 3개만
+                    context += self.format_tour_info(tour) + "\n"
+            
+            if not hotels and not tours:
+                return "죄송합니다. 요청하신 내용에 대한 정보를 찾을 수 없습니다. 다른 검색어로 다시 문의해 주세요."
+            
+            # OpenAI API 호출
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": """당신은 여행 상담 전문가입니다. 주어진 호텔/투어 데이터를 바탕으로 고객의 질문에 답변하세요.
+
+규칙:
+1. 오직 제공된 데이터베이스 정보만 사용하세요
+2. 무조건적인 추천은 하지 마세요
+3. 고객의 질문 의도를 파악하고 관련 정보만 제공하세요
+4. 정확한 가격과 정보를 제공하세요
+5. 친근하고 전문적인 톤을 사용하세요
+6. 데이터에 없는 내용은 "해당 정보를 확인할 수 없습니다"라고 안내하세요"""
+                    },
+                    {
+                        "role": "user",
+                        "content": context
+                    }
+                ],
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return f"AI 응답 생성 중 오류가 발생했습니다: {str(e)}"
+    
+    def process_message(self, user_message):
+        """메시지 처리 메인 함수"""
+        # 1. 키워드 추출
+        keywords = self.extract_keywords(user_message)
+        
+        # 2. 의도 파악
+        intent = self.determine_intent(user_message)
+        
+        # 3. 데이터베이스 검색
+        hotels, tours = self.search_database(keywords, intent)
+        
+        # 4. AI 응답 생성
+        response = self.generate_response(user_message, hotels, tours)
+        
+        return {
+            'response': response,
+            'intent': intent,
+            'keywords': keywords,
+            'hotels_found': len(hotels),
+            'tours_found': len(tours)
+        }
