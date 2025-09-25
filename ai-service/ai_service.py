@@ -1,4 +1,4 @@
-from openai import OpenAI
+import openai
 import os
 import json
 import re
@@ -14,7 +14,7 @@ else:
 
 class TravelAI:
     def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         self.last_search_results = {'hotels': [], 'tours': []}  # 마지막 검색 결과 저장
         self.conversation_history = {}  # conversation_id별 대화 히스토리
         self.response_cache = {}  # 응답 캐시
@@ -1102,7 +1102,7 @@ class TravelAI:
             except:
                 print("Debug info (Korean text)")
 
-            response = self.client.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "당신은 이여행사 직원입니다. 각 투어상품, 호텔, 기타 서비스를 헷갈리지 않게 정확히 답변하세요."},
