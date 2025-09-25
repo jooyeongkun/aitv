@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 from ai_service import TravelAI
 import uvicorn
@@ -20,12 +21,12 @@ travel_ai = TravelAI()
 
 class ChatRequest(BaseModel):
     message: str
-    conversation_id: int = None
+    conversation_id: Optional[int] = None
 
 class ChatResponse(BaseModel):
     response: str
     intent: str
-    keywords: list
+    keywords: List[str]
     hotels_found: int
     tours_found: int
 
