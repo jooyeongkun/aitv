@@ -540,12 +540,24 @@ app.put('/api/tours/:id/move-up', async (req, res) => {
       return res.status(404).json({ error: '투어를 찾을 수 없습니다.' });
     }
 
-    const currentOrder = currentTour.rows[0].display_order;
+    let currentOrder = currentTour.rows[0].display_order;
 
-    // 위에 있는 투어 찾기
+    // display_order가 null이거나 0인 경우 재정렬
+    if (!currentOrder || currentOrder === 0) {
+      await reorderAllTours();
+      const updatedTour = await db.query('SELECT display_order FROM tours WHERE id = $1', [id]);
+      currentOrder = updatedTour.rows[0].display_order;
+    }
+
+    // 이미 최상위인지 확인
+    if (currentOrder <= 1) {
+      return res.status(400).json({ error: '이미 최상위입니다.' });
+    }
+
+    // 위에 있는 투어 찾기 (바로 위 순서)
     const upperTour = await db.query(
-      'SELECT id, display_order FROM tours WHERE display_order < $1 ORDER BY display_order DESC LIMIT 1',
-      [currentOrder]
+      'SELECT id, display_order FROM tours WHERE display_order = $1',
+      [currentOrder - 1]
     );
 
     if (upperTour.rows.length === 0) {
@@ -577,12 +589,28 @@ app.put('/api/tours/:id/move-down', async (req, res) => {
       return res.status(404).json({ error: '투어를 찾을 수 없습니다.' });
     }
 
-    const currentOrder = currentTour.rows[0].display_order;
+    let currentOrder = currentTour.rows[0].display_order;
 
-    // 아래에 있는 투어 찾기
+    // display_order가 null이거나 0인 경우 재정렬
+    if (!currentOrder || currentOrder === 0) {
+      await reorderAllTours();
+      const updatedTour = await db.query('SELECT display_order FROM tours WHERE id = $1', [id]);
+      currentOrder = updatedTour.rows[0].display_order;
+    }
+
+    // 전체 투어 개수 확인
+    const totalCount = await db.query('SELECT COUNT(*) as count FROM tours');
+    const maxOrder = totalCount.rows[0].count;
+
+    // 이미 최하위인지 확인
+    if (currentOrder >= maxOrder) {
+      return res.status(400).json({ error: '이미 최하위입니다.' });
+    }
+
+    // 아래에 있는 투어 찾기 (바로 아래 순서)
     const lowerTour = await db.query(
-      'SELECT id, display_order FROM tours WHERE display_order > $1 ORDER BY display_order ASC LIMIT 1',
-      [currentOrder]
+      'SELECT id, display_order FROM tours WHERE display_order = $1',
+      [currentOrder + 1]
     );
 
     if (lowerTour.rows.length === 0) {
@@ -602,6 +630,20 @@ app.put('/api/tours/:id/move-down', async (req, res) => {
     res.status(500).json({ error: '순서를 변경할 수 없습니다.' });
   }
 });
+
+// 투어 순서 재정렬 헬퍼 함수
+async function reorderAllTours() {
+  try {
+    const result = await db.query('SELECT id FROM tours ORDER BY id ASC');
+    for (let i = 0; i < result.rows.length; i++) {
+      const tourId = result.rows[i].id;
+      const newOrder = i + 1;
+      await db.query('UPDATE tours SET display_order = $1 WHERE id = $2', [newOrder, tourId]);
+    }
+  } catch (error) {
+    console.error('투어 순서 재정렬 오류:', error);
+  }
+}
 
 const PORT = process.env.PORT || 3004;
 server.listen(PORT, () => {
