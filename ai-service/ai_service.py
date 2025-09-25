@@ -8,7 +8,7 @@ load_dotenv()
 
 # 환경에 따라 다른 데이터베이스 모듈 사용
 if os.getenv('USE_SUPABASE', 'false').lower() == 'true':
-    from database_supabase import search_hotels, search_tours
+    from database_requests import search_hotels, search_tours
 else:
     from database import search_hotels, search_tours
 
