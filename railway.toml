@@ -1,0 +1,7 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "cd ai-service && python main.py"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

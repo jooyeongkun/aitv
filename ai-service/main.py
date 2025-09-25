@@ -76,4 +76,6 @@ def health_check():
     return {"status": "healthy"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5002)
+    import os
+    port = int(os.getenv("PORT", 5002))
+    uvicorn.run(app, host="0.0.0.0", port=port)

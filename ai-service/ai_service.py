@@ -3,9 +3,14 @@ import os
 import json
 import re
 from dotenv import load_dotenv
-from database import search_hotels, search_tours
 
 load_dotenv()
+
+# 환경에 따라 다른 데이터베이스 모듈 사용
+if os.getenv('USE_SUPABASE', 'false').lower() == 'true':
+    from database_supabase import search_hotels, search_tours
+else:
+    from database import search_hotels, search_tours
 
 class TravelAI:
     def __init__(self):
