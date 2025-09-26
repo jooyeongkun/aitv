@@ -31,7 +31,7 @@ const TourManagement = () => {
 
   const fetchTours = async () => {
     try {
-      const response = await axios.get('http://localhost:3006/api/tours');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/tours`);
       setTours(response.data);
       setFilteredTours(response.data);
     } catch (error) {
@@ -91,7 +91,7 @@ const TourManagement = () => {
       if (tour.id !== 'new') {
         // 기존 투어만 DB 업데이트 (새 투어는 저장하지 않음)
         console.log('투어 DB 업데이트 시도:', tour.id);
-        await axios.put(`http://localhost:3006/api/tours/${tour.id}`, {
+        await axios.put(`${process.env.REACT_APP_API_URL}/tours/${tour.id}`, {
           [field]: value
         });
         console.log('투어 DB 업데이트 완료');
@@ -114,7 +114,7 @@ const TourManagement = () => {
 
     if (tour.id !== 'new') {
       try {
-        await axios.delete(`http://localhost:3006/api/tours/${tour.id}`);
+        await axios.delete(`${process.env.REACT_APP_API_URL}/tours/${tour.id}`);
       } catch (error) {
         console.error('투어 삭제 실패:', error);
         return; // 에러가 발생하면 로컬 상태는 업데이트하지 않음
@@ -128,7 +128,7 @@ const TourManagement = () => {
   // 투어 순서 위로 이동
   const moveTourUp = async (tourId) => {
     try {
-      await axios.put(`http://localhost:3006/api/tours/${tourId}/move-up`);
+      await axios.put(`${process.env.REACT_APP_API_URL}/tours/${tourId}/move-up`);
       fetchTours(); // 목록 새로고침
     } catch (error) {
       if (error.response?.data?.error) {
@@ -143,7 +143,7 @@ const TourManagement = () => {
   // 투어 순서 아래로 이동
   const moveTourDown = async (tourId) => {
     try {
-      await axios.put(`http://localhost:3006/api/tours/${tourId}/move-down`);
+      await axios.put(`${process.env.REACT_APP_API_URL}/tours/${tourId}/move-down`);
       fetchTours(); // 목록 새로고침
     } catch (error) {
       if (error.response?.data?.error) {
@@ -167,7 +167,7 @@ const TourManagement = () => {
     // DB 업데이트 (새 투어가 아닌 경우만)
     if (tour.id !== 'new') {
       try {
-        await axios.put(`http://localhost:3006/api/tours/${tour.id}`, {
+        await axios.put(`${process.env.REACT_APP_API_URL}/tours/${tour.id}`, {
           is_active: newStatus
         });
       } catch (error) {
@@ -208,7 +208,7 @@ const TourManagement = () => {
     
     try {
       console.log('투어 저장 시도:', tour);
-      const response = await axios.post('http://localhost:3006/api/tours', tour);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/tours`, tour);
       console.log('투어 저장 응답:', response.data);
       const updatedTours = [...tours];
       updatedTours[index] = response.data;

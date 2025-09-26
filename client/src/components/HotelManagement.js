@@ -28,7 +28,7 @@ const HotelManagement = () => {
 
   const fetchHotels = async () => {
     try {
-      const response = await axios.get('http://localhost:3006/api/hotels');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/hotels`);
       setHotels(response.data);
       setFilteredHotels(response.data);
     } catch (error) {
@@ -86,7 +86,7 @@ const HotelManagement = () => {
     try {
       if (hotel.id !== 'new') {
         // 기존 호텔만 DB 업데이트 (새 호텔은 저장하지 않음)
-        await axios.put(`http://localhost:3006/api/hotels/${hotel.id}`, {
+        await axios.put(`${process.env.REACT_APP_API_URL}/hotels/${hotel.id}`, {
           [field]: value
         });
       }
@@ -102,8 +102,8 @@ const HotelManagement = () => {
     
     if (hotel.id !== 'new') {
       try {
-        console.log(`DELETE 요청: http://localhost:3006/api/hotels/${hotel.id}`);
-        const response = await axios.delete(`http://localhost:3006/api/hotels/${hotel.id}`);
+        console.log(`DELETE 요청: ${process.env.REACT_APP_API_URL}/hotels/${hotel.id}`);
+        const response = await axios.delete(`${process.env.REACT_APP_API_URL}/hotels/${hotel.id}`);
         console.log('삭제 응답:', response);
       } catch (error) {
         console.error('호텔 삭제 실패:', error);
@@ -130,7 +130,7 @@ const HotelManagement = () => {
     // DB 업데이트 (새 호텔이 아닌 경우만)
     if (hotel.id !== 'new') {
       try {
-        await axios.put(`http://localhost:3006/api/hotels/${hotel.id}`, {
+        await axios.put(`${process.env.REACT_APP_API_URL}/hotels/${hotel.id}`, {
           is_active: newStatus
         });
         console.log('활성화 상태 DB 업데이트 완료');
@@ -166,7 +166,7 @@ const HotelManagement = () => {
     
     try {
       console.log('POST 요청:', hotel);
-      const response = await axios.post('http://localhost:3006/api/hotels', hotel);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/hotels`, hotel);
       console.log('저장 응답:', response.data);
       const updatedHotels = [...hotels];
       updatedHotels[index] = response.data;
@@ -404,7 +404,7 @@ const HotelManagement = () => {
           const updateData = {
             promotion_end: checked ? '9999-12-31' : new Date().toISOString().split('T')[0]
           };
-          await axios.put(`http://localhost:3006/api/hotels/${hotel.id}`, updateData);
+          await axios.put(`${process.env.REACT_APP_API_URL}/hotels/${hotel.id}`, updateData);
         }
       } catch (error) {
         console.error('무제한 설정 업데이트 실패:', error);

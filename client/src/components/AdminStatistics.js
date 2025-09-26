@@ -23,7 +23,7 @@ const AdminStatistics = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get('http://localhost:3006/api/conversations');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/conversations`);
       
       // 이번달 상담 갯수 계산
       const currentMonth = new Date().getMonth();

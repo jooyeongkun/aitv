@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     console.log('Token set:', token.substring(0, 20) + '...');
 
     // 소켓 연결
-    const newSocket = io('http://localhost:3006');
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
     setSocket(newSocket);
 
     // 대화 목록 가져오기
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
   const fetchConversations = async () => {
     try {
       console.log('Fetching conversations...');
-      const response = await axios.get('http://localhost:3006/api/conversations');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/conversations`);
       console.log('Conversations received:', response.data);
       setConversations(response.data);
       
@@ -91,7 +91,7 @@ const AdminDashboard = () => {
 
       // 메시지 가져오기
       console.log('Fetching messages for conversation:', conversation.id);
-      const response = await axios.get(`http://localhost:3006/api/conversations/${conversation.id}/messages`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/conversations/${conversation.id}/messages`);
       console.log('Messages received:', response.data);
       setMessages(response.data);
     } catch (error) {

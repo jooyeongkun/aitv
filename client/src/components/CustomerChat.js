@@ -25,7 +25,7 @@ const CustomerChat = () => {
   // 패키지 목록 가져오기 (투어만)
   const fetchPackages = async () => {
     try {
-      const toursResponse = await axios.get('http://localhost:3006/api/tours');
+      const toursResponse = await axios.get(`${process.env.REACT_APP_API_URL}/tours`);
 
       const tourPackages = toursResponse.data.map(tour => ({
         name: tour.tour_name,
@@ -49,7 +49,7 @@ const CustomerChat = () => {
     fetchPackages();
 
     // 소켓 연결
-    const newSocket = io('http://localhost:3006');
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
     setSocket(newSocket);
 
     // 소켓 이벤트 리스너
