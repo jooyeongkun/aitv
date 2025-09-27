@@ -119,13 +119,12 @@ const CustomerChat = () => {
     const messageToSend = inputMessage;
     setInputMessage('');
 
-    console.log('🔵 [Customer] Sending message:', messageToSend);
+    console.log('🔵 [Customer] Sending message via HTTP:', messageToSend);
     console.log('🔵 [Customer] Current conversationId:', conversationId);
-    console.log('🔵 [Customer] Socket connected:', socket?.connected);
 
     // AI 타이핑 상태 활성화
     setIsAiTyping(true);
-    
+
     // 즉시 화면에 표시
     const tempMessage = {
       id: 'temp-' + Date.now(),
@@ -135,33 +134,65 @@ const CustomerChat = () => {
     };
     setMessages(prev => [...prev, tempMessage]);
 
-    // 채팅방이 없으면 생성
-    if (!conversationId) {
-      const sessionId = getSessionId();
-      console.log('🔵 [Customer] Creating new chat with session:', sessionId);
-      
-      socket.emit('start-chat', { sessionId });
-      
-      // 채팅방 생성 완료를 기다린 후 메시지 전송
-      socket.once('chat-started', (data) => {
-        console.log('🟢 [Customer] Chat started with ID:', data.conversationId);
-        setConversationId(data.conversationId);
-        
-        socket.emit('send-message', {
-          conversationId: data.conversationId,
-          message: messageToSend,
-          senderType: 'customer'
+    try {
+      let currentConversationId = conversationId;
+
+      // 채팅방이 없으면 HTTP API로 생성
+      if (!currentConversationId) {
+        const sessionId = getSessionId();
+        console.log('🔵 [Customer] Creating new chat via HTTP with session:', sessionId);
+
+        const startResponse = await axios.post(`${process.env.REACT_APP_API_URL}/conversations/start`, {
+          sessionId,
+          customerName: null
         });
-        console.log('🟢 [Customer] Message sent to new conversation');
-      });
-    } else {
-      // 기존 채팅방에 메시지 전송
-      socket.emit('send-message', {
-        conversationId,
+
+        currentConversationId = startResponse.data.conversationId;
+        setConversationId(currentConversationId);
+        console.log('🟢 [Customer] Chat started with ID:', currentConversationId);
+      }
+
+      // HTTP API로 메시지 전송
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/conversations/${currentConversationId}/messages`, {
         message: messageToSend,
         senderType: 'customer'
       });
-      console.log('🟢 [Customer] Message sent to existing conversation');
+
+      console.log('🟢 [Customer] HTTP Response:', response.data);
+
+      // 임시 메시지 제거
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+
+      // 서버에서 받은 실제 메시지들 추가
+      if (response.data.customerMessage) {
+        setMessages(prev => [...prev, response.data.customerMessage]);
+      }
+
+      // AI 응답이 있으면 추가
+      if (response.data.aiMessage) {
+        setIsAiTyping(false);
+        setTimeout(() => {
+          setMessages(prev => [...prev, response.data.aiMessage]);
+        }, 500); // 자연스러운 AI 응답 딜레이
+      } else {
+        setIsAiTyping(false);
+      }
+
+    } catch (error) {
+      console.error('HTTP 메시지 전송 실패:', error);
+      setIsAiTyping(false);
+
+      // 임시 메시지 제거
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+
+      // 오류 메시지 표시
+      const errorMessage = {
+        id: Date.now(),
+        message_text: '메시지 전송에 실패했습니다. 다시 시도해주세요.',
+        sender_type: 'system',
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
