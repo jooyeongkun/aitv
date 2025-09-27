@@ -204,10 +204,15 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
     // 고객 메시지인 경우 AI 자동 응답 처리
     if (senderType === 'customer') {
       try {
+        // 투어 정보 가져오기
+        const toursResult = await db.query('SELECT tour_name, tour_region, duration, description FROM tours WHERE is_active = true ORDER BY display_order');
+        const tours = toursResult.rows;
+
         // AI 서비스에 요청
         const aiResponse = await axios.post('http://api1.foodstorevn.com:5002/chat', {
           message: message,
-          conversation_id: conversationId
+          conversation_id: conversationId,
+          tours: tours
         }, {
           headers: {
             'Content-Type': 'application/json; charset=utf-8'
@@ -344,10 +349,15 @@ io.on('connection', (socket) => {
       // 고객 메시지인 경우 AI 자동 응답 처리
       if (senderType === 'customer') {
         try {
+          // 투어 정보 가져오기
+          const toursResult = await db.query('SELECT tour_name, tour_region, duration, description FROM tours WHERE is_active = true ORDER BY display_order');
+          const tours = toursResult.rows;
+
           // AI 서비스에 요청
           const aiResponse = await axios.post('http://api1.foodstorevn.com:5002/chat', {
             message: message,
-            conversation_id: conversationId
+            conversation_id: conversationId,
+            tours: tours
           }, {
             headers: {
               'Content-Type': 'application/json; charset=utf-8'
