@@ -62,7 +62,8 @@ const io = socketIo(server, {
     origin: ["https://aitv-kappa.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ['polling']
 });
 
 console.log('🚀 Socket.IO server initialized');
