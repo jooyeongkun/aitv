@@ -171,18 +171,19 @@ const CustomerChat = () => {
 
   // 첫 메시지에서만 채팅방 생성하므로 자동 생성 제거
 
-  if (!isConnected) {
-    return (
-      <div className="customer-chat">
-        <div className="chat-header">
-          <h3>고객 상담 채팅</h3>
-        </div>
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-          <h4>서버에 연결 중...</h4>
-        </div>
-      </div>
-    );
-  }
+  // 임시로 연결 상태 체크 비활성화 - 항상 채팅창 표시
+  // if (!isConnected) {
+  //   return (
+  //     <div className="customer-chat">
+  //       <div className="chat-header">
+  //         <h3>고객 상담 채팅</h3>
+  //       </div>
+  //       <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+  //         <h4>서버에 연결 중...</h4>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="customer-chat">
