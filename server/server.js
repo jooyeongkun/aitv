@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -440,11 +442,7 @@ app.delete('/api/hotels/:id', async (req, res) => {
 app.get('/api/tours', async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT id, tour_name, tour_region, duration,
-             TO_CHAR(promotion_start, 'YYYY-MM-DD') as promotion_start,
-             TO_CHAR(promotion_end, 'YYYY-MM-DD') as promotion_end,
-             is_unlimited, description, is_active,
-             display_order, created_at, updated_at
+      SELECT id, tour_name, tour_region, duration, description, is_active, display_order, created_at
       FROM tours WHERE is_active = true ORDER BY display_order ASC, created_at DESC
     `);
     res.json(result.rows || result);
