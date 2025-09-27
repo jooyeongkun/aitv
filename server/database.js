@@ -1,7 +1,7 @@
 require('dotenv').config();
 
-// PostgreSQL이 없으면 SQLite 사용
-const USE_SQLITE = !process.env.DB_HOST || process.env.USE_SQLITE === 'true';
+// PostgreSQL 강제 사용
+const USE_SQLITE = false;
 
 if (USE_SQLITE) {
   console.log('Using SQLite database');
