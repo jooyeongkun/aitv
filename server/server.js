@@ -205,7 +205,7 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
     if (senderType === 'customer') {
       try {
         // AI 서비스에 요청
-        const aiResponse = await axios.post('http://localhost:5002/chat', {
+        const aiResponse = await axios.post('http://api1.foodstorevn.com:5002/chat', {
           message: message,
           conversation_id: conversationId
         }, {
@@ -345,7 +345,7 @@ io.on('connection', (socket) => {
       if (senderType === 'customer') {
         try {
           // AI 서비스에 요청
-          const aiResponse = await axios.post('http://localhost:5002/chat', {
+          const aiResponse = await axios.post('http://api1.foodstorevn.com:5002/chat', {
             message: message,
             conversation_id: conversationId
           }, {
