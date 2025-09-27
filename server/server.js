@@ -74,13 +74,13 @@ app.post('/api/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    const result = await db.query('SELECT * FROM admins WHERE username = $1', [username]);
+    const result = await db.query('SELECT * FROM admin_users WHERE username = $1', [username]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: '아이디 또는 비밀번호가 틀렸습니다.' });
     }
 
     const admin = result.rows[0];
-    const validPassword = await bcrypt.compare(password, admin.password_hash);
+    const validPassword = await bcrypt.compare(password, admin.password);
     
     if (!validPassword) {
       return res.status(401).json({ error: '아이디 또는 비밀번호가 틀렸습니다.' });
@@ -93,7 +93,6 @@ app.post('/api/admin/login', async (req, res) => {
     );
 
     // 온라인 상태 업데이트
-    await db.query('UPDATE admins SET is_online = true WHERE id = $1', [admin.id]);
 
     res.json({
       token,
@@ -141,7 +140,7 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
     const result = await db.query(`
       SELECT m.*, a.name as admin_name
       FROM messages m
-      LEFT JOIN admins a ON m.sender_id = a.id AND m.sender_type = 'admin'
+      LEFT JOIN admin_users a ON m.sender_id = a.id AND m.sender_type = 'admin'
       WHERE m.conversation_id = $1
       ORDER BY m.created_at ASC
     `, [id]);
