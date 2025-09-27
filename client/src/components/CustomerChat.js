@@ -48,8 +48,10 @@ const CustomerChat = () => {
     // 패키지 목록 가져오기
     fetchPackages();
 
-    // 소켓 연결
-    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
+    // 소켓 연결 (polling만 사용)
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL, {
+      transports: ['polling']
+    });
     setSocket(newSocket);
 
     // 소켓 이벤트 리스너
