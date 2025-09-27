@@ -460,22 +460,16 @@ app.get('/api/tours', async (req, res) => {
 app.post('/api/tours', async (req, res) => {
   try {
     console.log('투어 생성 요청 받음:', req.body);
-    const { tour_name, tour_region, duration, promotion_start, promotion_end, is_unlimited, description } = req.body;
+    const { tour_name, tour_region, duration, description } = req.body;
 
     const result = await db.query(`
-      INSERT INTO tours (tour_name, tour_region, duration, promotion_start, promotion_end, is_unlimited, description)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id, tour_name, tour_region, duration,
-                TO_CHAR(promotion_start, 'YYYY-MM-DD') as promotion_start,
-                TO_CHAR(promotion_end, 'YYYY-MM-DD') as promotion_end,
-                is_unlimited, description, is_active
+      INSERT INTO tours (tour_name, tour_region, duration, description)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, tour_name, tour_region, duration, description, is_active, display_order, created_at, updated_at
     `, [
       tour_name || '',
       tour_region || '',
       duration || '',
-      promotion_start || new Date().toISOString().split('T')[0],
-      promotion_end || null,
-      is_unlimited || false,
       description || ''
     ]);
 
@@ -503,10 +497,7 @@ app.put('/api/tours/:id', async (req, res) => {
     const result = await db.query(`
       UPDATE tours SET ${setClause}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
-      RETURNING id, tour_name, tour_region, duration,
-                TO_CHAR(promotion_start, 'YYYY-MM-DD') as promotion_start,
-                TO_CHAR(promotion_end, 'YYYY-MM-DD') as promotion_end,
-                is_unlimited, description, is_active
+      RETURNING id, tour_name, tour_region, duration, description, is_active, display_order, created_at, updated_at
     `, [id, ...values]);
     
     res.json(result.rows ? result.rows[0] : { id, ...updates });
