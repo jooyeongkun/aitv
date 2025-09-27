@@ -159,6 +159,119 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
   }
 });
 
+// HTTP API 엔드포인트 - 채팅 시작
+app.post('/api/conversations/start', async (req, res) => {
+  try {
+    const { sessionId, customerName } = req.body;
+
+    // 기존 대화 찾기 또는 새 대화 생성
+    let result = await db.query('SELECT * FROM conversations WHERE session_id = $1', [sessionId]);
+
+    if (result.rows.length === 0) {
+      result = await db.query(
+        'INSERT INTO conversations (session_id, customer_name, status) VALUES ($1, $2, $3) RETURNING *',
+        [sessionId, customerName || null, 'waiting']
+      );
+    }
+
+    const conversation = result.rows[0];
+    res.json({ conversationId: conversation.id, conversation });
+  } catch (error) {
+    console.error('Start chat error:', error);
+    res.status(500).json({ error: '채팅을 시작할 수 없습니다.' });
+  }
+});
+
+// HTTP API 엔드포인트 - 메시지 전송
+app.post('/api/conversations/:id/messages', async (req, res) => {
+  try {
+    const { id: conversationId } = req.params;
+    const { message, senderType, senderId } = req.body;
+
+    console.log('🔵 HTTP Message received:', { conversationId, message, senderType });
+
+    // 메시지 DB 저장
+    const result = await db.query(
+      'INSERT INTO messages (conversation_id, sender_type, sender_id, message_text) VALUES ($1, $2, $3, $4) RETURNING *',
+      [conversationId, senderType, senderId || null, message]
+    );
+
+    const newMessage = result.rows[0];
+
+    // 대화방 업데이트 시간 갱신
+    await db.query('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [conversationId]);
+
+    // 고객 메시지인 경우 AI 자동 응답 처리
+    if (senderType === 'customer') {
+      try {
+        // AI 서비스에 요청
+        const aiResponse = await axios.post('http://localhost:5002/chat', {
+          message: message,
+          conversation_id: conversationId
+        }, {
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8'
+          }
+        });
+
+        if (aiResponse.data && aiResponse.data.response && aiResponse.data.response.trim().length > 0) {
+          // AI 응답을 DB에 저장
+          const aiMessageResult = await db.query(
+            'INSERT INTO messages (conversation_id, sender_type, sender_id, message_text) VALUES ($1, $2, $3, $4) RETURNING *',
+            [conversationId, 'ai', null, aiResponse.data.response]
+          );
+
+          const aiMessage = aiMessageResult.rows[0];
+
+          // 대화방 업데이트 시간 갱신
+          await db.query('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [conversationId]);
+
+          console.log('AI response sent via HTTP:', aiResponse.data.response);
+
+          // 고객 메시지와 AI 응답 모두 반환
+          res.json({
+            customerMessage: newMessage,
+            aiMessage: aiMessage,
+            success: true
+          });
+        } else {
+          // AI 응답이 유효하지 않을 때
+          let errorMessage = '죄송합니다. 잠시 후 다시 질문해 주시거나, 좀 더 구체적으로 질문해 주세요.';
+
+          const errorMessageResult = await db.query(
+            'INSERT INTO messages (conversation_id, sender_type, sender_id, message_text) VALUES ($1, $2, $3, $4) RETURNING *',
+            [conversationId, 'ai', null, errorMessage]
+          );
+
+          const errorMessageObj = errorMessageResult.rows[0];
+          await db.query('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [conversationId]);
+
+          res.json({
+            customerMessage: newMessage,
+            aiMessage: errorMessageObj,
+            success: true
+          });
+        }
+      } catch (aiError) {
+        console.error('AI service error:', aiError.message);
+        // AI 서비스 오류 시에도 고객 메시지는 정상 저장되었으므로 성공 응답
+        res.json({
+          customerMessage: newMessage,
+          success: true,
+          aiError: 'AI 서비스에 일시적인 문제가 있습니다.'
+        });
+      }
+    } else {
+      // 관리자 메시지인 경우
+      res.json({ message: newMessage, success: true });
+    }
+
+  } catch (error) {
+    console.error('Send message error:', error);
+    res.status(500).json({ error: '메시지를 전송할 수 없습니다.' });
+  }
+});
+
 // Socket.io 연결 처리
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.id);
