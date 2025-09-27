@@ -92,6 +92,7 @@ app.post('/api/admin/login', async (req, res) => {
       { expiresIn: '8h' }
     );
 
+    // 온라인 상태 업데이트
 
     res.json({
       token,

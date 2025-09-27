@@ -23,7 +23,8 @@ def get_db_connection():
 
 def get_cache_key(table_name, query_terms):
     """캐시 키 생성"""
-    key_data = f"{table_name}:{",".join(sorted(query_terms))}"
+    comma = ","
+    key_data = f"{table_name}:{comma.join(sorted(query_terms))}"
     return hashlib.md5(key_data.encode('utf-8')).hexdigest()
 
 def is_cache_valid(timestamp):
