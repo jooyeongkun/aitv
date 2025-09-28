@@ -304,30 +304,63 @@ class TravelAI:
 
         return unique_synonyms
 
+    def match_tour_names(self, user_message):
+        """사용자 메시지에서 투어명 동적 매칭"""
+        try:
+            # 모든 투어명 조회
+            all_tours = search_tours([])  # 빈 키워드로 모든 투어 조회
+            matched_tours = []
+
+            user_msg_lower = user_message.lower().replace(' ', '').replace('-', '')
+
+            for tour in all_tours:
+                tour_name = tour.get('tour_name', '').lower().replace(' ', '').replace('-', '')
+
+                # 정확한 투어명 매칭
+                if tour_name in user_msg_lower or user_msg_lower in tour_name:
+                    matched_tours.append(tour['tour_name'])
+                    continue
+
+                # 키워드 기반 매칭
+                tour_keywords = tour_name.split()
+                for keyword in tour_keywords:
+                    if len(keyword) >= 2 and keyword in user_msg_lower:
+                        matched_tours.append(tour['tour_name'])
+                        break
+
+            return list(set(matched_tours))  # 중복 제거
+        except Exception as e:
+            print(f"Tour matching error: {e}")
+            return []
+
     def extract_keywords(self, user_message):
         """사용자 메시지에서 키워드 추출"""
         import re
-        
+
         # 빈 메시지 처리
         if not user_message or user_message.strip() == '':
             return []
-        
+
         keywords = []
-        
+
+        # 동적 투어명 매칭
+        matched_tour_names = self.match_tour_names(user_message)
+        keywords.extend(matched_tour_names)
+
         # 지역 키워드 (데이터베이스에서 동적으로 조회)
         available_regions = self.get_available_regions()
         for region in available_regions:
             if region in user_message:
                 keywords.append(region)
-        
+
         # 호텔 관련 키워드
         hotel_keywords = ['호텔', '숙박', '리조트', '펜션', '게스트하우스', '객실', '룸']
         for keyword in hotel_keywords:
             if keyword in user_message:
                 keywords.append(keyword)
-        
-        # 투어 관련 키워드
-        tour_keywords = ['투어', '여행', '관광', '체험', '액티비티', '일정', '래프팅', '골프', '바나힐', '호이안', '패밀리', '패밀리팩', '라이트', '라이트팩', '베스트', '베스트팩']
+
+        # 기본 투어 관련 키워드 (일반적인 용어들)
+        tour_keywords = ['투어', '여행', '관광', '체험', '액티비티', '일정']
 
         # 가격 관련 키워드 (유아, 아동 포함)
         price_keywords = ['가격', '얼마', '비용', '요금', '돈', '금액', '값', '성인', '어른', '아이', '아동', '유아', '소아', '어린이', '애기', '몇명', '몇 명', '인원']
