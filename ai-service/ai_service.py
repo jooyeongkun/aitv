@@ -1000,7 +1000,7 @@ class TravelAI:
 - 정확한 가격 정보만 제공하세요 (투어 설명 금지)
 - 이전 대화에서 논의된 투어가 있으면 그 투어의 가격만 답변
 - 투어명이 없으면 "어떤 투어의 가격을 문의하시나요?"라고 물어보세요
-- 예약금과 잔금을 모두 명시하세요
+- 데이터베이스에 있는 가격 정보만 제공하세요
 
 {current_tour_context}
 {conversation_context if len(conversation_context) < 200 else ''}
@@ -1076,8 +1076,7 @@ class TravelAI:
 - 성인과 아동을 합쳐서 계산하지 말 것
 - 예: 성인 2명 + 아동 2명 = 성인 2인 가격 + (아동 1인 가격 × 2)
 
-5) 가격 계산 시 예약금과 잔금을 각각 합산한 총합을 반드시 표시하세요
-   예: 예약금 4만원+2만원 = 6만원, 잔금 $XXX+$YY = $총액
+5) 가격 계산 시 데이터베이스의 정확한 가격만 사용하세요
 6) 고객이 투어 구성이나 내용을 물을 때는 상세 설명을 제공하세요
 7) 데이터베이스에 없는 정보는 절대 추가하지 마세요
 
@@ -1109,7 +1108,7 @@ class TravelAI:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "당신은 이여행사 직원입니다. 각 투어상품, 호텔, 기타 서비스를 헷갈리지 않게 정확히 답변하세요."},
+                    {"role": "system", "content": "당신은 이여행사 직원입니다. 다음 규칙을 절대 지켜주세요:\n\n1. 제공된 데이터베이스 정보만 사용하세요\n2. 예약금, 잔금, 결제방법 등 데이터베이스에 없는 정보는 절대 추가하지 마세요\n3. 확실하지 않은 정보는 '확인 후 안내드리겠습니다'라고 답변하세요\n4. 각 투어상품, 호텔 정보를 정확히 구분해서 답변하세요"},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=500,
@@ -1161,7 +1160,7 @@ class TravelAI:
                     tour = tours[0]
                     tour_name = tour.get('tour_name', '')
                     if '어린이' in user_message or '아동' in user_message:
-                        return f"{tour_name} 아동 가격은 예약금 3만원 + 현지결제 $135 입니다. (키 90cm 이상 ~ 140cm 미만)"
+                        return f"{tour_name} 아동 가격은 확인 후 안내드리겠습니다."
                     else:
                         return f"{tour_name} 투어 가격 정보가 준비되어 있습니다. 구체적인 인원을 말씀해 주시면 정확한 가격을 안내해드리겠습니다."
                 return "죄송합니다. 좀 더 구체적으로 질문해 주시거나, 잠시 후 다시 시도해 주세요."
