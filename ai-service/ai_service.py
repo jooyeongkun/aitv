@@ -581,17 +581,51 @@ class TravelAI:
         if tour.get('infant_criteria'):
             info += f"📏 **유아기준**: {tour['infant_criteria']}\n"
 
-        # 상세 설명 추가 (가격 정보 포함) - 가격 정보는 자르지 않음
-        if tour.get('description'):
-            description = tour['description']
-            # 가격 관련 정보가 있으면 전체 보여주기
-            if any(keyword in description for keyword in ['가격', '유아', '아동', '성인', '$', '만원', '원']):
-                info += f"📝 {description}\n"
-            else:
-                info += f"📝 {description[:200]}{'...' if len(description) > 200 else ''}\n"
+        # 상세 설명은 별도 함수에서 처리
 
         return info
-    
+
+    def extract_relevant_description(self, description, user_message):
+        """사용자 질문에 따라 상세내용에서 관련 부분만 추출"""
+        if not description:
+            return ""
+
+        user_msg_lower = user_message.lower()
+        lines = description.split('\n')
+        relevant_lines = []
+
+        # 질문 유형별 키워드 정의
+        query_keywords = {
+            'price': ['가격', '얼마', '비용', '요금', '돈', '금액', '값', '$', '만원', '원', '유아', '아동', '성인', '어른'],
+            'schedule': ['일정', '스케줄', '시간', '몇시', '언제', '일차', '날짜'],
+            'content': ['내용', '구성', '포함', '활동', '체험', '프로그램'],
+            'location': ['위치', '장소', '어디', '지역', '주소'],
+            'criteria': ['기준', '나이', '몇살', '연령', '조건']
+        }
+
+        # 사용자 질문이 어떤 유형인지 판단
+        detected_types = []
+        for query_type, keywords in query_keywords.items():
+            if any(keyword in user_msg_lower for keyword in keywords):
+                detected_types.append(query_type)
+
+        # 관련 키워드가 포함된 줄 추출
+        if detected_types:
+            for line in lines:
+                line_lower = line.lower()
+                for query_type in detected_types:
+                    if any(keyword in line_lower for keyword in query_keywords[query_type]):
+                        relevant_lines.append(line.strip())
+                        break
+
+        # 관련 정보를 찾지 못했으면 전체 설명의 앞부분 반환
+        if not relevant_lines:
+            return description[:300] + ('...' if len(description) > 300 else '')
+
+        # 관련 정보만 반환 (최대 500자)
+        result = '\n'.join(relevant_lines)
+        return result[:500] + ('...' if len(result) > 500 else '')
+
     def get_conversation_context(self, conversation_id):
         """대화 컨텍스트 조회"""
         return self.conversation_history.get(conversation_id, {
@@ -885,19 +919,11 @@ class TravelAI:
                 prompt_context += "투어 정보:\n"
                 for tour in tours:  # 모든 투어
                     prompt_context += self.format_tour_info(tour)
-                    # 가격 질문이 아닐 때만 상세 설명 추가
-                    if not is_price_only_question and tour.get('description'):
-                        description = tour['description']
-                        # 설명이 너무 길면 요약 (2000자 이상시)
-                        if len(description) > 2000:
-                            # 가격 정보와 주요 내용만 추출
-                            lines = description.split('\n')
-                            important_lines = []
-                            for line in lines[:50]:  # 최대 50줄만
-                                if any(keyword in line for keyword in ['가격', '예약금', '잔금', '$', '만원', '내용', '일차']):
-                                    important_lines.append(line)
-                            description = '\n'.join(important_lines[:20])  # 최대 20줄
-                        prompt_context += f"상세내용: {description[:1000]}\n"  # 최대 1000자
+                    # 사용자 질문에 맞는 상세내용만 추출
+                    if tour.get('description'):
+                        relevant_description = self.extract_relevant_description(tour['description'], user_message)
+                        if relevant_description:
+                            prompt_context += f"📝 관련정보: {relevant_description}\n"
                     prompt_context += "\n"
             
             if not hotels and not tours:
