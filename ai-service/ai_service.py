@@ -557,6 +557,22 @@ class TravelAI:
         if tour.get('duration'):
             info += f"📅 **{tour['duration']}**\n"
 
+        # 가격 정보 추가 (매우 중요!)
+        if tour.get('adult_price'):
+            info += f"💰 **성인가격**: {tour['adult_price']}\n"
+
+        if tour.get('child_price'):
+            info += f"👶 **아동가격**: {tour['child_price']}\n"
+
+        if tour.get('infant_price'):
+            info += f"🍼 **유아가격**: {tour['infant_price']}\n"
+
+        if tour.get('child_criteria'):
+            info += f"📏 **아동기준**: {tour['child_criteria']}\n"
+
+        if tour.get('infant_criteria'):
+            info += f"📏 **유아기준**: {tour['infant_criteria']}\n"
+
         # 상세 설명 추가 (가격 정보 포함)
         if tour.get('description'):
             info += f"📝 {tour['description'][:200]}{'...' if len(tour['description']) > 200 else ''}\n"
