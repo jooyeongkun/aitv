@@ -1442,6 +1442,21 @@ class TravelAI:
         # 응답이 필터링으로 인해 너무 짧아졌거나 무효해진 경우 상세 오류 정보 및 안내 제공
         if not response or len(response.strip()) < 10:
             # 사용자 질문 분석하여 맞춤형 안내 제공
+            user_msg_lower = user_message.lower()
+
+            # 어린이 관련 동의어들
+            children_keywords = ['아이', '아동', '애기', '어린이', '소아', '유아', '애들', '꼬마', '꼬마들', '애', '어린애', '작은애', '꼬맹이', '애기들']
+            is_children_question = any(keyword in user_msg_lower for keyword in children_keywords)
+
+            # 가격 관련 동의어들
+            price_keywords = [
+                '얼마', '가격', '비용', '요금', '돈', '값', '금액', '경비', '료금', '비',
+                '추가', '더하면', '플러스', '더해서', '포함해서', '합치면', '총', '전체',
+                '얼만', '얼마나', '얼마정도', '얼마쯤', '가격이', '비용이', '요금이',
+                '계산', '정산', '지불', '결제', '페이', '지불해야', '내야'
+            ]
+            is_price_question = any(keyword in user_msg_lower for keyword in price_keywords)
+
             tour_keywords = ['베스트팩', 'bestpack', '호이안', '다낭', '나트랑', '푸꾸옥', '사파', '하롱베이', '칸토', '메콩', '래프팅']
             hotel_keywords = ['호텔', '숙소', '리조트', '펜션']
 
