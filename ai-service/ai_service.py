@@ -581,9 +581,14 @@ class TravelAI:
         if tour.get('infant_criteria'):
             info += f"📏 **유아기준**: {tour['infant_criteria']}\n"
 
-        # 상세 설명 추가 (가격 정보 포함)
+        # 상세 설명 추가 (가격 정보 포함) - 가격 정보는 자르지 않음
         if tour.get('description'):
-            info += f"📝 {tour['description'][:200]}{'...' if len(tour['description']) > 200 else ''}\n"
+            description = tour['description']
+            # 가격 관련 정보가 있으면 전체 보여주기
+            if any(keyword in description for keyword in ['가격', '유아', '아동', '성인', '$', '만원', '원']):
+                info += f"📝 {description}\n"
+            else:
+                info += f"📝 {description[:200]}{'...' if len(description) > 200 else ''}\n"
 
         return info
     
