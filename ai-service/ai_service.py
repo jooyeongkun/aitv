@@ -328,7 +328,15 @@ class TravelAI:
         
         # 투어 관련 키워드
         tour_keywords = ['투어', '여행', '관광', '체험', '액티비티', '일정', '래프팅', '골프', '바나힐', '호이안', '패밀리', '라이트', '베스트', '라이트팩', '베스트팩']
+
+        # 가격 관련 키워드 (유아, 아동 포함)
+        price_keywords = ['가격', '얼마', '비용', '요금', '돈', '금액', '값', '성인', '어른', '아이', '아동', '유아', '소아', '어린이', '애기', '몇명', '몇 명', '인원']
         for keyword in tour_keywords:
+            if keyword in user_message:
+                keywords.append(keyword)
+
+        # 가격/인원 관련 키워드 추가
+        for keyword in price_keywords:
             if keyword in user_message:
                 keywords.append(keyword)
 
