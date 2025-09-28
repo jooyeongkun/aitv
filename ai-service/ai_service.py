@@ -1135,12 +1135,13 @@ class TravelAI:
             
         except Exception as e:
             error_str = str(e)
-            try:
-                print(f"OpenAI API Error: {error_str}")
-                if tours:
-                    print(f"Available tours: {[t.get('tour_name', 'Unknown') for t in tours]}")
-            except:
-                print("OpenAI API Error occurred")
+            error_type = type(e).__name__
+            print(f"OpenAI API Error: {error_type}: {error_str}")
+            print(f"Full error details: {repr(e)}")
+            import traceback
+            traceback.print_exc()
+            if tours:
+                print(f"Available tours: {[t.get('tour_name', 'Unknown') for t in tours]}")
 
             # 특정 오류에 따른 대응
             if "429" in error_str or "quota" in error_str.lower():
