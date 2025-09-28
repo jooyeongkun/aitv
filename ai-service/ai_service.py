@@ -961,9 +961,10 @@ class TravelAI:
             if conversation_id and conversation_id in self.conversation_history:
                 history = self.conversation_history[conversation_id]
                 if history:
-                    last_message = history[-1] if len(history) > 0 else None
+                    messages = history.get('messages', [])
+                    last_message = messages[-1] if len(messages) > 0 else None
                     if last_message:
-                        conversation_history_text = f"**📋 이전 대화 내용**: {last_message.get('user_message', '')}"
+                        conversation_history_text = f"**📋 이전 대화 내용**: {last_message.get('user', '')}"
 
             if context and context.get('current_tour_type'):
                 stored_tour_type = context['current_tour_type']
