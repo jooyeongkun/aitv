@@ -224,31 +224,52 @@ const CustomerChat = () => {
         <h3>세친구 투어</h3>
       </div>
 
+      {/* 고정 투어 목록 표시 */}
+      <div className="fixed-package-list" style={{
+        position: 'sticky',
+        top: 0,
+        backgroundColor: '#f8f9fa',
+        borderBottom: '1px solid #dee2e6',
+        padding: '0.5rem 1rem',
+        zIndex: 100,
+        fontSize: '0.85em'
+      }}>
+        <div style={{
+          fontWeight: 'bold',
+          color: '#495057',
+          marginBottom: '0.3rem',
+          fontSize: '0.9em'
+        }}>
+          🎯 현재 이용 가능한 패키지
+        </div>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          color: '#6c757d'
+        }}>
+          {packages.length > 0 ? (
+            packages.map((pkg, index) => (
+              <span key={index} style={{
+                backgroundColor: '#e9ecef',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '0.8em'
+              }}>
+                {pkg.name}
+              </span>
+            ))
+          ) : (
+            <span style={{ fontSize: '0.8em', color: '#adb5bd' }}>
+              패키지 정보를 불러오는 중...
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="chat-messages">
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', color: '#888', padding: '1rem' }}>
-            {/* 패키지 목록 표시 */}
-            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-              <div style={{ fontSize: '0.9em', fontWeight: 'bold', color: '#495057', marginBottom: '0.5rem' }}>
-                🎯 현재 이용 가능한 패키지
-              </div>
-              {packages.length > 0 ? (
-                packages.map((pkg, index) => (
-                  <div key={index} style={{
-                    fontSize: '0.85em',
-                    color: '#6c757d',
-                    padding: '2px 0',
-                    textAlign: 'left'
-                  }}>
-                    • {pkg.name}
-                  </div>
-                ))
-              ) : (
-                <div style={{ fontSize: '0.8em', color: '#adb5bd' }}>
-                  패키지 정보를 불러오는 중...
-                </div>
-              )}
-            </div>
             <div style={{ fontSize: '0.9em' }}>
               궁금한 점을 남겨주시면 AI가 답변해드립니다.
             </div>
