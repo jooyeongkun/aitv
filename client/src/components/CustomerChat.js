@@ -32,12 +32,8 @@ const CustomerChat = () => {
       setPackages(tourPackages);
     } catch (error) {
       console.error('패키지 목록 조회 실패:', error);
-      // 기본값 설정
-      setPackages([
-        { name: '래프팅', type: '투어' },
-        { name: '베이직 골프투어 72홀', type: '투어' },
-        { name: '베스트팩', type: '투어' }
-      ]);
+      // 서버 연결 실패시 빈 배열로 설정
+      setPackages([]);
     }
   };
 
