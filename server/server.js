@@ -1,8 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -56,17 +54,7 @@ async function generateWelcomeMessage() {
 }
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: ["https://aitv-kappa.vercel.app", "http://localhost:3000"],
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-  transports: ['polling']
-});
-
-console.log('🚀 Socket.IO server initialized');
+console.log('🚀 HTTP server initialized');
 
 app.use(cors({
   origin: ["https://aitv-kappa.vercel.app", "http://localhost:3000"],
@@ -209,7 +197,7 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
         const tours = toursResult.rows;
 
         // AI 서비스에 요청
-        const aiResponse = await axios.post('http://api1.foodstorevn.com:5002/chat', {
+        const aiResponse = await axios.post('http://localhost:5002/chat', {
           message: message,
           conversation_id: conversationId,
           tours: tours
@@ -277,7 +265,8 @@ app.post('/api/conversations/:id/messages', async (req, res) => {
   }
 });
 
-// Socket.io 연결 처리
+// Socket.io 제거됨 - HTTP API만 사용
+/*
 io.on('connection', (socket) => {
   console.log('🟢 User connected:', socket.id);
 
@@ -452,6 +441,7 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+*/
 
 // 호텔 관리 API
 // 호텔 목록 조회
@@ -762,7 +752,7 @@ async function reorderAllTours() {
   }
 }
 
-const PORT = process.env.PORT || 3004;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
