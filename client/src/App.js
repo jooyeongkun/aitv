@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import CustomerChat from './components/CustomerChat';
-import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import AdminStatistics from './components/AdminStatistics';
 import HotelManagement from './components/HotelManagement';
@@ -13,7 +12,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/" element={<CustomerChat />} />
-        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/statistics" element={<AdminStatistics />} />
         <Route path="/admin/hotels" element={<HotelManagement />} />
